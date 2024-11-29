@@ -1,5 +1,4 @@
 import argparse
-import fileinput
 import functools
 import itertools
 import json
