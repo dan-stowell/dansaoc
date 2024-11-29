@@ -638,6 +638,48 @@ def day05part02(filename, _):
       print('location', shrunk_destination_range, 'is in seed range')
       break
 
+
+def day06part01(filename, _):
+  with open(filename) as f:
+      puzzle_input = f.read()
+  lines = puzzle_input.splitlines()
+  race_times = tuple(int(x.strip()) for x in lines[0].split()[1:])
+  record_distances = tuple(int(x.strip()) for x in lines[1].split()[1:])
+  ways_to_win = []
+  for race_time, record_distance in zip(race_times, record_distances):
+    winning_times_and_distances = []
+    for t in range(race_time + 1):
+      distance = t * (race_time - t)
+      if distance > record_distance:
+        winning_times_and_distances.append((t, distance))
+    ways_to_win.append(len(winning_times_and_distances))
+  print(functools.reduce(operator.mul, ways_to_win))
+
+
+def day06part02(filename, _):
+  with open(filename) as f:
+      puzzle_input = f.read()
+  lines = puzzle_input.splitlines()
+  race_time = int(''.join(x for x in lines[0].split()[1:]))
+  record_distance = int(''.join(x for x in lines[1].split()[1:]))
+
+  first_winning_time = None
+  for t in range(race_time + 1):
+    distance = t * (race_time - t)
+    if distance > record_distance:
+      first_winning_time = t
+      break
+
+  last_winning_time = None
+  for t in range(race_time, -1, -1):
+    distance = t * (race_time - t)
+    if distance > record_distance:
+      last_winning_time = t
+      break
+
+  print(first_winning_time, last_winning_time,
+        last_winning_time - first_winning_time + 1)
+
 def main():
     day2function = {
         1: (day01, day01),
@@ -645,6 +687,7 @@ def main():
         3: (day03, day03part02),
         4: (day04part01, day04part02),
         5: (day05part01, day05part02),
+        6: (day06part01, day06part02),
     }
     parser = argparse.ArgumentParser()
     parser.add_argument('day', type=int)
