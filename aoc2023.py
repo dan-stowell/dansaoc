@@ -957,7 +957,7 @@ def day08part02(puzzle_input, _):
   print(math.lcm(*first_stepcounts))
 
 
-def day09part01_find_diffs(seq):
+def day09_find_diffs(seq):
   diffs = []
   for a, b in zip(seq, seq[1:]):
     diffs.append(b - a)
@@ -972,10 +972,10 @@ def day09part01(puzzle_input, _):
   pyramids = []
   for history in histories:
     pyramid = [history]
-    diffs = day09part01_find_diffs(history)
+    diffs = day09_find_diffs(history)
     pyramid.append(diffs)
     while set(diffs) != {0}:
-      diffs = day09part01_find_diffs(diffs)
+      diffs = day09_find_diffs(diffs)
       pyramid.append(diffs)
     pyramids.append(pyramid)
 
@@ -991,6 +991,32 @@ def day09part01(puzzle_input, _):
   print(sum(completions))
 
 
+def day09part02(puzzle_input, _):
+  histories=[]
+  for line in puzzle_input.splitlines():
+    histories.append(tuple(map(int, line.split())))
+
+  pyramids = []
+  for history in histories:
+    pyramid = [history]
+    diffs = day09_find_diffs(history)
+    pyramid.append(diffs)
+    while set(diffs) != {0}:
+      diffs = day09_find_diffs(diffs)
+      pyramid.append(diffs)
+    pyramids.append(pyramid)
+
+
+  completions=[]
+  for pyramid in pyramids:
+    current_completion = 0
+    for i in range(len(pyramid) - 2, -1, -1):
+      current_completion = pyramid[i][0] - current_completion
+    completions.append(current_completion)
+
+  print(sum(completions))
+
+
 def main():
     day2function = {
         1: (day01, day01),
@@ -1001,7 +1027,7 @@ def main():
         6: (day06part01, day06part02),
         7: (day07part01, day07part02),
         8: (day08part01, day08part02),
-        9: (day09part01,),
+        9: (day09part01, day09part02),
     }
     parser = argparse.ArgumentParser()
     parser.add_argument('day', type=int)
