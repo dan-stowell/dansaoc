@@ -1,5 +1,7 @@
+import argparse
 import fileinput
 import functools
+import json
 import operator
 import pprint
 import re
@@ -22,7 +24,7 @@ def line2value_digits(line):
     return int(first + last)
 
 
-def day01(filename):
+def day01(filename, _):
   calibrationvaluesum = 0
   calibrationvalues = []
   for line in fileinput.input(files=(filename, )):
@@ -160,7 +162,7 @@ def day02(filename, bag_contents):
   print(powersum)
   # possible_gameids = find_possible_gameids(gameid2cubesets, bag_contents)
 
-def day03(puzzle_file):
+def day03(puzzle_file, _):
   with open(puzzle_file) as f:
     puzzle_input = f.read()
   index2number_and_indices = {}
@@ -240,11 +242,15 @@ def day03(puzzle_file):
 
 if __name__ == '__main__':
     day2function = {
-        1: day01,
-        2: lambda f: day02(f, {'red': 12, 'green': 13, 'blue': 14}),
-        3: day03,
+        1: (day01, day01),
+        2: (day02, day02),
+        3: (day03, day03),
     }
-    day = int(sys.argv[1].strip())
-    filename = sys.argv[2]
-    function = day2function[day]
-    function(filename)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('day', type=int)
+    parser.add_argument('part', type=int)
+    parser.add_argument('filename')
+    parser.add_argument('--extra', type=json.loads)
+    args = parser.parse_args()
+    function = day2function[args.day][args.part - 1]
+    function(args.filename, args.extra)
