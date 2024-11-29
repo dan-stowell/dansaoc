@@ -1,4 +1,7 @@
 import fileinput
+import functools
+import operator
+import pprint
 import re
 import sys
 
@@ -91,5 +94,78 @@ def line2value_words_and_digits(line):
   if first is not None and last is not None:
     return int(first + last)
 
+import fileinput
+import functools
+import operator
+import pprint
+import re
+
+
+def load_cubesets(filename):
+  gameidre = re.compile("^Game\s+(?P<gameid>\d+):\s+(?P<cubesets>.+)$")
+  cubere = re.compile('\s*(?P<cubecount>\d+)\s+(?P<cubecolor>red|blue|green)')
+  gameid2cubesets = {}
+  for line in fileinput.input(files=(filename, )):
+    m = gameidre.match(line)
+    if m is None:
+      continue
+    else:
+      gameid = int(m.groupdict()['gameid'])
+      cubesets = m.groupdict()['cubesets']
+      cubesetdicts = []
+      for cubeset in cubesets.split(';'):
+        cubesetdict = {}
+        for cube in cubeset.split(','):
+          m = cubere.match(cube)
+          if m is None:
+            continue
+          else:
+            cubecount = m.groupdict()['cubecount']
+            cubecolor = m.groupdict()['cubecolor']
+            cubesetdict[cubecolor] = int(cubecount)
+        cubesetdicts.append(cubesetdict)
+      gameid2cubesets[gameid] = cubesetdicts
+
+  return gameid2cubesets
+
+
+def find_possible_gameids(gameid2cubesets, bag_contents):
+  all_gameids = set(gameid2cubesets.keys())
+  impossible_gameids = set()
+  for gameid, cubesets in gameid2cubesets.items():
+    for cubeset in cubesets:
+      for color, count in cubeset.items():
+        if color not in bag_contents or count > bag_contents[color]:
+          impossible_gameids.add(gameid)
+  possible_gameids = all_gameids.difference(impossible_gameids)
+  return possible_gameids
+
+
+def find_fewest_cubes(cubesets):
+  fewest_cubes = {}
+  for cubeset in cubesets:
+    for color, count in cubeset.items():
+      fewest_cubes[color] = max(count, fewest_cubes.get(color, 0))
+  return fewest_cubes
+
+
+def day02(filename, bag_contents):
+  gameid2cubesets = load_cubesets(filename)
+  powersum = 0
+  for gameid, cubesets in gameid2cubesets.items():
+    fewest_cubes = find_fewest_cubes(cubesets)
+    pprint.pprint(fewest_cubes)
+    cubeset_power = functools.reduce(operator.mul, fewest_cubes.values())
+    powersum += cubeset_power
+  print(powersum)
+  # possible_gameids = find_possible_gameids(gameid2cubesets, bag_contents)
+
 if __name__ == '__main__':
-    day01(sys.argv[1])
+    day2function = {
+        1: day01,
+        2: lambda f: day02(f, {'red': 12, 'green': 13, 'blue': 14})
+    }
+    day = int(sys.argv[1].strip())
+    filename = sys.argv[2]
+    function = day2function[day]
+    function(filename)
