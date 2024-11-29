@@ -2,6 +2,7 @@ import argparse
 import functools
 import itertools
 import json
+import math
 import operator
 import pprint
 import re
@@ -902,6 +903,60 @@ def day08part01(puzzle_input, _):
   print(stepcount)
 
 
+def day08part02(puzzle_input, _):
+  lines = puzzle_input.splitlines()
+  directions = lines[0].strip()
+  nodere = re.compile('^(?P<node>[0-9A-Z]+)\s+=\s+\((?P<left>[0-9A-Z]+),\s+(?P<right>[0-9A-Z]+)\)$')
+  node2leftright = {}
+  for line in lines[1:]:
+    match = nodere.match(line)
+    if match is not None:
+      node = match.groupdict()['node']
+      left = match.groupdict()['left']
+      right = match.groupdict()['right']
+      node2leftright[node] = (left, right)
+  pprint.pprint(node2leftright)
+
+  startingnodes = tuple(node for node in node2leftright.keys() if node.endswith('A'))
+
+  pprint.pprint(startingnodes)
+  startingnode2z_stepcount_node = {}
+  currentnodes = startingnodes
+  stepcount = 0
+  for direction in itertools.cycle(directions):
+    if len(startingnode2z_stepcount_node) == len(startingnodes):
+      break
+
+    nextnodes = []
+    for i, currentnode in enumerate(currentnodes):
+      if currentnode.endswith('Z'):
+        startingnode = startingnodes[i]
+        if startingnode in startingnode2z_stepcount_node:
+          startingnode2z_stepcount_node[startingnode].append((stepcount, currentnode))
+        else:
+          startingnode2z_stepcount_node[startingnode] = [(stepcount, currentnode)]
+      leftright = node2leftright[currentnode]
+      if direction == 'L':
+        nextnodes.append(leftright[0])
+      elif direction == 'R':
+        nextnodes.append(leftright[1])
+      else:
+        print('unknown direction', direction)
+        return
+    stepcount += 1
+    currentnodes = tuple(nextnodes)
+    if stepcount % 100000 == 0:
+      print(stepcount)
+      pprint.pprint(currentnodes)
+
+  pprint.pprint(startingnode2z_stepcount_node)
+  first_stepcounts = []
+  for stepcounts_nodes in startingnode2z_stepcount_node.values():
+    first_stepcount, first_z_node = stepcounts_nodes[0]
+    first_stepcounts.append(first_stepcount)
+  print(math.lcm(*first_stepcounts))
+
+
 def main():
     day2function = {
         1: (day01, day01),
@@ -911,7 +966,7 @@ def main():
         5: (day05part01, day05part02),
         6: (day06part01, day06part02),
         7: (day07part01, day07part02),
-        8: (day08part01,),
+        8: (day08part01, day08part02),
     }
     parser = argparse.ArgumentParser()
     parser.add_argument('day', type=int)
