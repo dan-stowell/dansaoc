@@ -680,6 +680,101 @@ def day06part02(filename, _):
   print(first_winning_time, last_winning_time,
         last_winning_time - first_winning_time + 1)
 
+
+day07_label2rank = {
+  '2': 12,
+  '3': 11,
+  '4': 10,
+  '5': 9,
+  '6': 8,
+  '7': 7,
+  '8': 6,
+  '9': 5,
+  'T': 4,
+  'J': 3,
+  'Q': 2,
+  'K': 1,
+  'A': 0,
+}
+
+day07_type2rank = {
+  'Five of a kind': 0,
+  'Four of a kind': 1,
+  'Full house': 2,
+  'Three of a kind': 3,
+  'Two pair': 4,
+  'One pair': 5,
+  'High card': 6,
+}
+
+def day07_part01_hand2type(hand):
+  label2count = {}
+  for label in hand:
+    if label in label2count:
+      label2count[label] += 1
+    else:
+      label2count[label] = 1
+
+  if len(label2count) == 1 and 5 in label2count.values():
+    return 'Five of a kind'
+  elif len(label2count) == 2 and 4 in label2count.values():
+    return 'Four of a kind'
+  elif len(label2count) == 2 and 3 in label2count.values() and 2 in label2count.values():
+    return 'Full house'
+  elif len(label2count) == 3 and 3 in label2count.values():
+    return 'Three of a kind'
+  elif len(label2count) == 3 and 2 in label2count.values() and 1 in label2count.values():
+    return 'Two pair'
+  elif len(label2count) == 4 and 2 in label2count.values():
+    return 'One pair'
+  elif len(label2count) == 5 and 1 in label2count.values():
+    return 'High card'
+
+  return None
+
+
+def day07_handlt(a, b):
+  a_type = day07_part01_hand2type(a)
+  b_type = day07_part01_hand2type(b)
+  a_typerank = day07_type2rank[a_type]
+  b_typerank = day07_type2rank[b_type]
+  if a_typerank < b_typerank:
+    return True
+  elif a_typerank > b_typerank:
+    return False
+  else:
+    for i in range(len(a)):
+      if day07_label2rank[a[i]] < day07_label2rank[b[i]]:
+        return True
+      elif day07_label2rank[a[i]] > day07_label2rank[b[i]]:
+        return False
+      else:
+        continue
+  return False
+
+
+def day07_handkey(hand):
+  handtype = day07_part01_hand2type(hand)
+  typerank = day07_type2rank[handtype]
+  cardranks = tuple(day07_label2rank[label] for label in hand)
+  return (typerank, cardranks)
+
+def day07part01(filename, _):
+  with open(filename) as f:
+      puzzle_input = f.read()
+  hands_bids = []
+  for line in puzzle_input.splitlines():
+    hand, bidstr = line.split()
+    bid = int(bidstr)
+    hands_bids.append((hand, bid))
+  sorted_hands_bids = sorted(hands_bids, key=lambda x: day07_handkey(x[0]))
+  total_winnings = 0
+  for rank, (hand, bid) in zip(range(len(sorted_hands_bids), -1, -1), sorted_hands_bids):
+    print(rank, hand, bid)
+    total_winnings += rank * bid
+  print(total_winnings)
+
+
 def main():
     day2function = {
         1: (day01, day01),
@@ -688,6 +783,7 @@ def main():
         4: (day04part01, day04part02),
         5: (day05part01, day05part02),
         6: (day06part01, day06part02),
+        7: (day07part01,),
     }
     parser = argparse.ArgumentParser()
     parser.add_argument('day', type=int)
@@ -697,6 +793,7 @@ def main():
     args = parser.parse_args()
     function = day2function[args.day][args.part - 1]
     function(args.filename, args.extra)
+
 
 if __name__ == '__main__':
     main()
