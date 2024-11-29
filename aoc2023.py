@@ -681,7 +681,7 @@ def day06part02(filename, _):
         last_winning_time - first_winning_time + 1)
 
 
-day07_label2rank = {
+day07part01_label2rank = {
   '2': 12,
   '3': 11,
   '4': 10,
@@ -697,7 +697,7 @@ day07_label2rank = {
   'A': 0,
 }
 
-day07_type2rank = {
+day07part01_type2rank = {
   'Five of a kind': 0,
   'Four of a kind': 1,
   'Full house': 2,
@@ -707,7 +707,7 @@ day07_type2rank = {
   'High card': 6,
 }
 
-def day07_part01_hand2type(hand):
+def day07part01_hand2type(hand):
   label2count = {}
   for label in hand:
     if label in label2count:
@@ -733,30 +733,30 @@ def day07_part01_hand2type(hand):
   return None
 
 
-def day07_handlt(a, b):
-  a_type = day07_part01_hand2type(a)
-  b_type = day07_part01_hand2type(b)
-  a_typerank = day07_type2rank[a_type]
-  b_typerank = day07_type2rank[b_type]
+def day07part01_handlt(a, b):
+  a_type = day07part01_hand2type(a)
+  b_type = day07part01_hand2type(b)
+  a_typerank = day07part01_type2rank[a_type]
+  b_typerank = day07part01_type2rank[b_type]
   if a_typerank < b_typerank:
     return True
   elif a_typerank > b_typerank:
     return False
   else:
     for i in range(len(a)):
-      if day07_label2rank[a[i]] < day07_label2rank[b[i]]:
+      if day07part01_label2rank[a[i]] < day07part01_label2rank[b[i]]:
         return True
-      elif day07_label2rank[a[i]] > day07_label2rank[b[i]]:
+      elif day07part01_label2rank[a[i]] > day07part01_label2rank[b[i]]:
         return False
       else:
         continue
   return False
 
 
-def day07_handkey(hand):
-  handtype = day07_part01_hand2type(hand)
-  typerank = day07_type2rank[handtype]
-  cardranks = tuple(day07_label2rank[label] for label in hand)
+def day07part01_handkey(hand):
+  handtype = day07part01_hand2type(hand)
+  typerank = day07part01_type2rank[handtype]
+  cardranks = tuple(day07part01_label2rank[label] for label in hand)
   return (typerank, cardranks)
 
 def day07part01(filename, _):
@@ -767,7 +767,7 @@ def day07part01(filename, _):
     hand, bidstr = line.split()
     bid = int(bidstr)
     hands_bids.append((hand, bid))
-  sorted_hands_bids = sorted(hands_bids, key=lambda x: day07_handkey(x[0]))
+  sorted_hands_bids = sorted(hands_bids, key=lambda x: day07part01_handkey(x[0]))
   total_winnings = 0
   for rank, (hand, bid) in zip(range(len(sorted_hands_bids), -1, -1), sorted_hands_bids):
     print(rank, hand, bid)
