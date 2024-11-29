@@ -1,6 +1,7 @@
 import argparse
 import fileinput
 import functools
+import itertools
 import json
 import operator
 import pprint
@@ -24,10 +25,10 @@ def line2value_digits(line):
     return int(first + last)
 
 
-def day01(filename, _):
+def day01(puzzle_input, _):
   calibrationvaluesum = 0
   calibrationvalues = []
-  for line in fileinput.input(files=(filename, )):
+  for line in puzzle_input.splitlines():
     calibrationvalues.append(line2value_words_and_digits(line))
   for calibrationvalue in calibrationvalues:
     calibrationvaluesum += calibrationvalue
@@ -96,18 +97,13 @@ def line2value_words_and_digits(line):
   if first is not None and last is not None:
     return int(first + last)
 
-import fileinput
-import functools
-import operator
-import pprint
-import re
 
 
-def load_cubesets(filename):
+def load_cubesets(puzzle_input):
   gameidre = re.compile("^Game\s+(?P<gameid>\d+):\s+(?P<cubesets>.+)$")
   cubere = re.compile('\s*(?P<cubecount>\d+)\s+(?P<cubecolor>red|blue|green)')
   gameid2cubesets = {}
-  for line in fileinput.input(files=(filename, )):
+  for line in puzzle_input.splitlines():
     m = gameidre.match(line)
     if m is None:
       continue
@@ -151,8 +147,8 @@ def find_fewest_cubes(cubesets):
   return fewest_cubes
 
 
-def day02(filename, bag_contents):
-  gameid2cubesets = load_cubesets(filename)
+def day02(puzzle_input, bag_contents):
+  gameid2cubesets = load_cubesets(puzzle_input)
   powersum = 0
   for gameid, cubesets in gameid2cubesets.items():
     fewest_cubes = find_fewest_cubes(cubesets)
@@ -162,9 +158,7 @@ def day02(filename, bag_contents):
   print(powersum)
   # possible_gameids = find_possible_gameids(gameid2cubesets, bag_contents)
 
-def day03(puzzle_file, _):
-  with open(puzzle_file) as f:
-    puzzle_input = f.read()
+def day03(puzzle_input, _):
   index2number_and_indices = {}
   index2symbol = {}
   height = 0
@@ -341,9 +335,7 @@ def find_gears(index2number_and_indices, index2symbol):
   return gears
 
 
-def day03part02(filename, _):
-  with open(filename) as f:
-    puzzle_input = f.read()
+def day03part02(puzzle_input, _):
   index2number_and_indices, index2symbol, width, height = find_numbers_symbols_width_height(
       puzzle_input)
   part_numbers_and_indices = find_part_numbers_and_indices(
@@ -358,9 +350,7 @@ def day03part02(filename, _):
   print(gear_ratio_sum)
 
 
-def day04part01(filename, _):
-  with open(filename) as f:
-      puzzle_input = f.read()
+def day04part01(puzzle_input, _):
   cardre = re.compile('^\s*Card\s+(?P<card_number>\d+):\s+(?P<winning_numbers>[\s\d]+)\s+\|\s+(?P<numbers_you_have>[\s\d]+)$')
   points_sum = 0
   for line in puzzle_input.splitlines():
@@ -375,9 +365,7 @@ def day04part01(filename, _):
   print(points_sum)
 
 
-def day04part02(filename, _):
-  with open(filename) as f:
-    puzzle_input = f.read()
+def day04part02(puzzle_input, _):
   cardre = re.compile('^\s*Card\s+(?P<card_number>\d+):\s+(?P<winning_numbers>[\s\d]+)\s+\|\s+(?P<numbers_you_have>[\s\d]+)$')
   cardnumbers_matches = []
   for line in puzzle_input.splitlines():
@@ -406,7 +394,7 @@ def day05lookup(source, mapping):
   return source
 
 
-def day05part01(filename, _):
+def day05part01(puzzle_input, _):
   mapheadre = re.compile(
       '^(?P<source_category>[^\-]+)-to-(?P<destination_category>[^\s\-]+)\s+map:$'
   )
@@ -418,8 +406,6 @@ def day05part01(filename, _):
   seeds = None
   current_source_destination = None
   source2destination = {}
-  with open(filename) as f:
-    puzzle_input = f.read()
   for line in puzzle_input.splitlines():
     mapheadmatch = mapheadre.match(line)
     maplinematch = maplinere.match(line)
@@ -469,7 +455,7 @@ def day05part01(filename, _):
   print(min(seed2location.values()))
 
 
-def day05_parse_inputpath_to_seedranges_and_map(inputpath):
+def day05_parse_inputpath_to_seedranges_and_map(puzzle_input):
   mapheadre = re.compile(
       '^(?P<source_category>[^\-]+)-to-(?P<destination_category>[^\s\-]+)\s+map:$'
   )
@@ -481,7 +467,7 @@ def day05_parse_inputpath_to_seedranges_and_map(inputpath):
   seedranges = None
   current_source_destination = None
   source2destination = {}
-  for line in fileinput.input((inputpath, )):
+  for line in puzzle_input.splitlines():
     mapheadmatch = mapheadre.match(line)
     maplinematch = maplinere.match(line)
     seedsmatch = seedsre.match(line)
@@ -616,8 +602,8 @@ def day05_find_valid_seed(seedranges, destination2source_full_mapping, destinati
   return False, None
 
 
-def day05part02(filename, _):
-  seed_starts_lens, source2destination = day05_parse_inputpath_to_seedranges_and_map(filename)
+def day05part02(puzzle_input, _):
+  seed_starts_lens, source2destination = day05_parse_inputpath_to_seedranges_and_map(puzzle_input)
   destination2source_full_mapping = {}
   for source, (destination, mapping) in source2destination.items():
     full_mapping = day05_starts_lens_to_ranges(mapping)
@@ -639,9 +625,7 @@ def day05part02(filename, _):
       break
 
 
-def day06part01(filename, _):
-  with open(filename) as f:
-      puzzle_input = f.read()
+def day06part01(puzzle_input, _):
   lines = puzzle_input.splitlines()
   race_times = tuple(int(x.strip()) for x in lines[0].split()[1:])
   record_distances = tuple(int(x.strip()) for x in lines[1].split()[1:])
@@ -656,9 +640,7 @@ def day06part01(filename, _):
   print(functools.reduce(operator.mul, ways_to_win))
 
 
-def day06part02(filename, _):
-  with open(filename) as f:
-      puzzle_input = f.read()
+def day06part02(puzzle_input, _):
   lines = puzzle_input.splitlines()
   race_time = int(''.join(x for x in lines[0].split()[1:]))
   record_distance = int(''.join(x for x in lines[1].split()[1:]))
@@ -759,9 +741,7 @@ def day07part01_handkey(hand):
   cardranks = tuple(day07part01_label2rank[label] for label in hand)
   return (typerank, cardranks)
 
-def day07part01(filename, _):
-  with open(filename) as f:
-      puzzle_input = f.read()
+def day07part01(puzzle_input, _):
   hands_bids = []
   for line in puzzle_input.splitlines():
     hand, bidstr = line.split()
@@ -877,9 +857,7 @@ def day07part02_handkey(hand):
   cardranks = tuple(day07part02_label2rank[label] for label in hand)
   return (typerank, cardranks)
 
-def day07part02(filename, _):
-  with open(filename) as f:
-    puzzle_input = f.read()
+def day07part02(puzzle_input, _):
   hands_bids = []
   for line in puzzle_input.splitlines():
     hand, bidstr = line.split()
@@ -893,6 +871,38 @@ def day07part02(filename, _):
   print(total_winnings)
 
 
+def day08part01(puzzle_input, _):
+  lines = puzzle_input.splitlines()
+  directions = lines[0].strip()
+  nodere = re.compile('^(?P<node>[A-Z]+)\s+=\s+\((?P<left>[A-Z]+),\s+(?P<right>[A-Z]+)\)$')
+  node2leftright = {}
+  for line in lines[1:]:
+    match = nodere.match(line)
+    if match is not None:
+      node = match.groupdict()['node']
+      left = match.groupdict()['left']
+      right = match.groupdict()['right']
+      node2leftright[node] = (left, right)
+  pprint.pprint(node2leftright)
+
+  current_node = 'AAA'
+  stepcount = 0
+  for direction in itertools.cycle(directions):
+    if current_node == 'ZZZ':
+      break
+    leftright = node2leftright[current_node]
+    if direction == 'L':
+      current_node = leftright[0]
+    elif direction == 'R':
+      current_node = leftright[1]
+    else:
+      print('unknown direction', direction)
+      return
+    stepcount += 1
+
+  print(stepcount)
+
+
 def main():
     day2function = {
         1: (day01, day01),
@@ -902,6 +912,7 @@ def main():
         5: (day05part01, day05part02),
         6: (day06part01, day06part02),
         7: (day07part01, day07part02),
+        8: (day08part01,),
     }
     parser = argparse.ArgumentParser()
     parser.add_argument('day', type=int)
@@ -910,7 +921,9 @@ def main():
     parser.add_argument('--extra', type=json.loads)
     args = parser.parse_args()
     function = day2function[args.day][args.part - 1]
-    function(args.filename, args.extra)
+    with open(args.filename) as f:
+        puzzle_input = f.read()
+    function(puzzle_input, args.extra)
 
 
 if __name__ == '__main__':
