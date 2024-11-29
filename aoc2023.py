@@ -160,10 +160,89 @@ def day02(filename, bag_contents):
   print(powersum)
   # possible_gameids = find_possible_gameids(gameid2cubesets, bag_contents)
 
+def day03(puzzle_file):
+  with open(puzzle_file) as f:
+    puzzle_input = f.read()
+  index2number_and_indices = {}
+  index2symbol = {}
+  height = 0
+  width = 0
+  for (y, line) in enumerate(puzzle_input.splitlines()):
+    height += 1
+    current_number = None
+    current_number_indices = []
+    for (x, c) in enumerate(line):
+      width = max(width, x + 1)
+      if c == '.':
+        if current_number is not None:
+          current_number_int = int(current_number)
+          current_number_indices_tuple = tuple(current_number_indices)
+          for (number_x, number_y) in current_number_indices:
+            index2number_and_indices[(number_x, number_y)] = (
+                current_number_int, current_number_indices_tuple)
+          current_number = None
+          current_number_indices = []
+      elif c.isdigit():
+        if current_number is None:
+          current_number = c
+          current_number_indices.append((x, y))
+        else:
+          current_number = current_number + c
+          current_number_indices.append((x, y))
+      else:
+        index2symbol[(x, y)] = c
+        if current_number is not None:
+          current_number_int = int(current_number)
+          current_number_indices_tuple = tuple(current_number_indices)
+          for (number_x, number_y) in current_number_indices:
+            index2number_and_indices[(number_x, number_y)] = (
+                current_number_int, current_number_indices_tuple)
+          current_number = None
+          current_number_indices = []
+
+    if current_number is not None:
+      current_number_int = int(current_number)
+      current_number_indices_tuple = tuple(current_number_indices)
+      for (number_x, number_y) in current_number_indices:
+        index2number_and_indices[(number_x,
+                                  number_y)] = (current_number_int,
+                                                current_number_indices_tuple)
+      current_number = None
+      current_number_indices = []
+
+  symbol_adjacent_indices = set()
+  deltas = (
+      (-1, -1),
+      (0, -1),
+      (1, -1),
+      (-1, 0),
+      (1, 0),
+      (-1, 1),
+      (0, 1),
+      (1, 1),
+  )
+  for (x, y) in index2symbol:
+    for (dx, dy) in deltas:
+      if x + dx >= 0 and x + dx < width and y + dy >= 0 and y + dy < height:
+        symbol_adjacent_indices.add((x + dx, y + dy))
+
+  part_numbers_and_indices = set()
+  for (adjacent_x, adjacent_y) in symbol_adjacent_indices:
+    if (adjacent_x, adjacent_y) in index2number_and_indices:
+      part_numbers_and_indices.add(index2number_and_indices[(adjacent_x,
+                                                             adjacent_y)])
+
+  part_number_sum = 0
+  for part_number, _ in part_numbers_and_indices:
+    part_number_sum += part_number
+  print(part_number_sum)
+
+
 if __name__ == '__main__':
     day2function = {
         1: day01,
-        2: lambda f: day02(f, {'red': 12, 'green': 13, 'blue': 14})
+        2: lambda f: day02(f, {'red': 12, 'green': 13, 'blue': 14}),
+        3: day03,
     }
     day = int(sys.argv[1].strip())
     filename = sys.argv[2]
