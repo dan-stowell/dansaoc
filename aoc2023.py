@@ -469,13 +469,182 @@ def day05part01(filename, _):
   print(min(seed2location.values()))
 
 
+def day05_parse_inputpath_to_seedranges_and_map(inputpath):
+  mapheadre = re.compile(
+      '^(?P<source_category>[^\-]+)-to-(?P<destination_category>[^\s\-]+)\s+map:$'
+  )
+  maplinere = re.compile(
+      '^(?P<destination_range_start>\d+)\s+(?P<source_range_start>\d+)\s+(?P<range_length>\d+)$'
+  )
+  seedsre = re.compile('^seeds:(?P<seeds>[\s+\d]+)$')
+
+  seedranges = None
+  current_source_destination = None
+  source2destination = {}
+  for line in fileinput.input((inputpath, )):
+    mapheadmatch = mapheadre.match(line)
+    maplinematch = maplinere.match(line)
+    seedsmatch = seedsre.match(line)
+    if seedsmatch is not None:
+      if seedranges is not None:
+        raise (Exception(
+            'already have seeds {} encountered another seeds line {}'.format(
+                seedranges, seedsmatch.group('seed'))))
+      seedlist = tuple(int(x) for x in seedsmatch.group('seeds').split())
+      seedranges = tuple(zip(seedlist[::2], seedlist[1::2]))
+    elif mapheadmatch is not None:
+      if current_source_destination is not None:
+        raise (Exception(
+            'already have map {} encountered another map header {}'.format(
+                current_source_destination, line.strip())))
+      source_category = mapheadmatch.group('source_category')
+      destination_category = mapheadmatch.group('destination_category')
+      current_source_destination = (source_category, destination_category)
+      source2destination[source_category] = (destination_category, [])
+    elif maplinematch is not None:
+      destination_range_start = int(
+          maplinematch.group('destination_range_start'))
+      source_range_start = int(maplinematch.group('source_range_start'))
+      range_length = int(maplinematch.group('range_length'))
+      current_source, _ = current_source_destination
+      _, current_map = source2destination[current_source]
+      current_map.append(
+          (source_range_start, destination_range_start, range_length))
+    else:
+      current_source_destination = None
+
+  return seedranges, source2destination
+
+
+def day05_lookup(source, starts_lens):
+  for source_range_start, destination_range_start, range_length in starts_lens:
+    if source >= source_range_start and source < source_range_start + range_length:
+      return destination_range_start + (source - source_range_start)
+  return source
+
+
+def day05_invert_map(source2destination):
+  destination2source = {}
+  for source, (destination, mapping) in source2destination.items():
+    destination2source[destination] = (
+        source,
+        tuple((destination_range_start, source_range_start, range_length)
+              for source_range_start, destination_range_start, range_length in
+              mapping))
+  return destination2source
+
+
+def day05_starts_lens_to_ranges(starts_lens):
+  mapped_ranges = []
+  for source_range_start, destination_range_start, range_length in starts_lens:
+    mapped_ranges.append(
+        ((source_range_start, source_range_start + range_length),
+         (destination_range_start, destination_range_start + range_length)))
+
+  last_end = 0
+  full_ranges = []
+  for mapped_range in sorted(mapped_ranges):
+    (start, end), (dstart, dend) = mapped_range
+    if start > last_end:
+      full_ranges.append(((last_end, start), (last_end, start)))
+    full_ranges.append(mapped_range)
+    last_end = end
+  full_ranges.append(((last_end, sys.maxsize), (last_end, sys.maxsize)))
+
+  return full_ranges
+
+
+def day05_enumerate_ranges(a_range, target_mapping):
+  start, end = a_range
+  split_start = start
+  for i, ((s, e), (ts, te)) in enumerate(target_mapping):
+    if start >= e:
+      continue
+
+    if start < s and end <= s:
+      continue
+
+    if end <= e:
+      yield ((start, end), (ts + (start - s), te - (e - end)))
+      return
+    else:
+      yield ((start, e), (ts + (start - s), te))
+      split_start = e
+      break
+
+  for (s, e), (ts, te) in target_mapping[i + 1:]:
+    if end <= e:
+      yield ((split_start, end), (ts + (split_start - s), te - (e - end)))
+      return
+    else:
+      yield ((split_start, e), (ts + (split_start - s), te))
+      split_start = e
+
+  return
+
+
+def day05_find_valid_seed(seedranges, destination2source_full_mapping, destination,
+                    a_range):
+  if destination == 'seed':
+    start, end = a_range
+    for s, e in seedranges:
+      if start >= s and start < e:
+        shrunk_destination_range = (max(s, start), min(e, end))
+        print(destination, shrunk_destination_range, 'is in seed range',
+              (s, e))
+        return True, shrunk_destination_range
+      if end > s and end <= e:
+        shrunk_destination_range = (max(s, start), min(e, end))
+        print(destination, shrunk_destination_range, 'is in seed range',
+              (s, e))
+        return True, shrunk_destination_range
+    return False, None
+
+  source, full_mapping = destination2source_full_mapping[destination]
+  destination_source_ranges = tuple(day05_enumerate_ranges(a_range, full_mapping))
+  for destination_range, source_range in destination_source_ranges:
+    found, shrunk_source_range = day05_find_valid_seed(
+        seedranges, destination2source_full_mapping, source, source_range)
+    if found:
+      source_start_difference = shrunk_source_range[0] - source_range[0]
+      source_end_difference = source_range[1] - shrunk_source_range[1]
+      shrunk_destination_range = (destination_range[0] + source_start_difference,
+                                  destination_range[1] - source_end_difference)
+      print(destination, shrunk_destination_range, 'is in seed range')
+      return True, shrunk_destination_range
+
+  return False, None
+
+
+def day05part02(filename, _):
+  seed_starts_lens, source2destination = day05_parse_inputpath_to_seedranges_and_map(filename)
+  destination2source_full_mapping = {}
+  for source, (destination, mapping) in source2destination.items():
+    full_mapping = day05_starts_lens_to_ranges(mapping)
+    flipped_mapping = tuple(sorted((r[1], r[0]) for r in full_mapping))
+    destination2source_full_mapping[destination] = (source, flipped_mapping)
+
+  seedranges = tuple(
+      sorted((start, start + len) for (start, len) in seed_starts_lens))
+  source, full_mapping = destination2source_full_mapping['location']
+  for destination_range, source_range in full_mapping:
+    found, shrunk_source_range = day05_find_valid_seed(
+        seedranges, destination2source_full_mapping, source, source_range)
+    if found:
+      source_start_difference = shrunk_source_range[0] - source_range[0]
+      source_end_difference = source_range[1] - shrunk_source_range[1]
+      shrunk_destination_range = (destination_range[0] + source_start_difference,
+                                  destination_range[1] - source_end_difference)
+      print('location', shrunk_destination_range, 'is in seed range')
+      break
+
 def main():
     day2function = {
         1: (day01, day01),
         2: (day02, day02),
         3: (day03, day03part02),
         4: (day04part01, day04part02),
-        5: (day05part01,),
+        5: (day05part01, day05part02),
     }
     parser = argparse.ArgumentParser()
     parser.add_argument('day', type=int)
