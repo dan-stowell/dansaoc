@@ -358,11 +358,52 @@ def day03part02(filename, _):
   print(gear_ratio_sum)
 
 
+def day04part01(filename, _):
+  with open(filename) as f:
+      puzzle_input = f.read()
+  cardre = re.compile('^\s*Card\s+(?P<card_number>\d+):\s+(?P<winning_numbers>[\s\d]+)\s+\|\s+(?P<numbers_you_have>[\s\d]+)$')
+  points_sum = 0
+  for line in puzzle_input.splitlines():
+    m = cardre.match(line)
+    card_number = int(m.group('card_number'))
+    winning_numbers = set(int(x) for x in m.group('winning_numbers').split())
+    numbers_you_have = set(int(x) for x in m.group('numbers_you_have').split())
+    winning_numbers_you_have = winning_numbers.intersection(numbers_you_have)
+    if len(winning_numbers_you_have) > 0:
+      points = pow(2, len(winning_numbers_you_have) - 1)
+      points_sum += points
+  print(points_sum)
+
+
+def day04part02(filename, _):
+  with open(filename) as f:
+    puzzle_input = f.read()
+  cardre = re.compile('^\s*Card\s+(?P<card_number>\d+):\s+(?P<winning_numbers>[\s\d]+)\s+\|\s+(?P<numbers_you_have>[\s\d]+)$')
+  cardnumbers_matches = []
+  for line in puzzle_input.splitlines():
+    m = cardre.match(line)
+    cardnumber = int(m.group('card_number'))
+    winning_numbers = set(int(x) for x in m.group('winning_numbers').split())
+    numbers_you_have = set(int(x) for x in m.group('numbers_you_have').split())
+    winning_numbers_you_have = winning_numbers.intersection(numbers_you_have)
+    matches = len(winning_numbers_you_have)
+    cardnumbers_matches.append((cardnumber, matches))
+
+  cardnumber2instances = {cardnumber: 1 for cardnumber, _ in cardnumbers_matches}
+  for cardnumber, matches in cardnumbers_matches:
+    instances = cardnumber2instances[cardnumber]
+    for _ in range(instances):
+      for i in range(cardnumber + 1, cardnumber + 1 + matches):
+        if i in cardnumber2instances:
+          cardnumber2instances[i] += 1
+  print(sum(cardnumber2instances.values()))
+
 if __name__ == '__main__':
     day2function = {
         1: (day01, day01),
         2: (day02, day02),
         3: (day03, day03part02),
+        4: (day04part01, day04part02),
     }
     parser = argparse.ArgumentParser()
     parser.add_argument('day', type=int)
