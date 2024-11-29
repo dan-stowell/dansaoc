@@ -240,11 +240,129 @@ def day03(puzzle_file, _):
   print(part_number_sum)
 
 
+def find_numbers_symbols_width_height(input):
+  index2number_and_indices = {}
+  index2symbol = {}
+  height = 0
+  width = 0
+  for (y, line) in enumerate(input.splitlines()):
+    height += 1
+    current_number = None
+    current_number_indices = []
+    for (x, c) in enumerate(line):
+      width = max(width, x + 1)
+      if c == '.':
+        if current_number is not None:
+          current_number_int = int(current_number)
+          current_number_indices_tuple = tuple(current_number_indices)
+          for (number_x, number_y) in current_number_indices:
+            index2number_and_indices[(number_x, number_y)] = (
+                current_number_int, current_number_indices_tuple)
+          current_number = None
+          current_number_indices = []
+      elif c.isdigit():
+        if current_number is None:
+          current_number = c
+          current_number_indices.append((x, y))
+        else:
+          current_number = current_number + c
+          current_number_indices.append((x, y))
+      else:
+        index2symbol[(x, y)] = c
+        if current_number is not None:
+          current_number_int = int(current_number)
+          current_number_indices_tuple = tuple(current_number_indices)
+          for (number_x, number_y) in current_number_indices:
+            index2number_and_indices[(number_x, number_y)] = (
+                current_number_int, current_number_indices_tuple)
+          current_number = None
+          current_number_indices = []
+
+    if current_number is not None:
+      current_number_int = int(current_number)
+      current_number_indices_tuple = tuple(current_number_indices)
+      for (number_x, number_y) in current_number_indices:
+        index2number_and_indices[(number_x,
+                                  number_y)] = (current_number_int,
+                                                current_number_indices_tuple)
+      current_number = None
+      current_number_indices = []
+  return (index2number_and_indices, index2symbol, width, height)
+
+
+def find_part_numbers_and_indices(index2number_and_indices, index2symbol,
+                                  width, height):
+  symbol_adjacent_indices = set()
+  deltas = (
+      (-1, -1),
+      (0, -1),
+      (1, -1),
+      (-1, 0),
+      (1, 0),
+      (-1, 1),
+      (0, 1),
+      (1, 1),
+  )
+  for (x, y) in index2symbol:
+    for (dx, dy) in deltas:
+      if x + dx >= 0 and x + dx < width and y + dy >= 0 and y + dy < height:
+        symbol_adjacent_indices.add((x + dx, y + dy))
+
+  part_numbers_and_indices = set()
+  for (adjacent_x, adjacent_y) in symbol_adjacent_indices:
+    if (adjacent_x, adjacent_y) in index2number_and_indices:
+      part_numbers_and_indices.add(index2number_and_indices[(adjacent_x,
+                                                             adjacent_y)])
+  return part_numbers_and_indices
+
+
+def find_gears(index2number_and_indices, index2symbol):
+  deltas = (
+      (-1, -1),
+      (0, -1),
+      (1, -1),
+      (-1, 0),
+      (1, 0),
+      (-1, 1),
+      (0, 1),
+      (1, 1),
+  )
+  gears = set()
+  for ((x, y), symbol) in index2symbol.items():
+    if symbol == '*':
+      adjacent_part_numbers = set()
+      for (dx, dy) in deltas:
+        if (x + dx, y + dy) in index2number_and_indices:
+          adjacent_part_numbers.add(index2number_and_indices[(x + dx, y + dy)])
+      if len(adjacent_part_numbers) == 2:
+        part_numbers = tuple(part_number
+                             for part_number, _ in adjacent_part_numbers)
+        gears.add(((x, y), part_numbers))
+  return gears
+
+
+def day03part02(filename, _):
+  with open(filename) as f:
+    puzzle_input = f.read()
+  index2number_and_indices, index2symbol, width, height = find_numbers_symbols_width_height(
+      puzzle_input)
+  part_numbers_and_indices = find_part_numbers_and_indices(
+      index2number_and_indices, index2symbol, width, height)
+  # pprint.pprint(part_numbers_and_indices)
+  gears = find_gears(index2number_and_indices, index2symbol)
+  pprint.pprint(gears)
+  gear_ratio_sum = 0
+  for _, part_numbers in gears:
+    gear_ratio = part_numbers[0] * part_numbers[1]
+    gear_ratio_sum += gear_ratio
+  print(gear_ratio_sum)
+
+
 if __name__ == '__main__':
     day2function = {
         1: (day01, day01),
         2: (day02, day02),
-        3: (day03, day03),
+        3: (day03, day03part02),
     }
     parser = argparse.ArgumentParser()
     parser.add_argument('day', type=int)
