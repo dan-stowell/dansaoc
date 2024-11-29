@@ -398,12 +398,84 @@ def day04part02(filename, _):
           cardnumber2instances[i] += 1
   print(sum(cardnumber2instances.values()))
 
-if __name__ == '__main__':
+
+def day05lookup(source, mapping):
+  for source_range_start, destination_range_start, range_length in mapping:
+    if source >= source_range_start and source < source_range_start + range_length:
+      return destination_range_start + (source - source_range_start)
+  return source
+
+
+def day05part01(filename, _):
+  mapheadre = re.compile(
+      '^(?P<source_category>[^\-]+)-to-(?P<destination_category>[^\s\-]+)\s+map:$'
+  )
+  maplinere = re.compile(
+      '^(?P<destination_range_start>\d+)\s+(?P<source_range_start>\d+)\s+(?P<range_length>\d+)$'
+  )
+  seedsre = re.compile('^seeds:(?P<seeds>[\s+\d]+)$')
+
+  seeds = None
+  current_source_destination = None
+  source2destination = {}
+  with open(filename) as f:
+    puzzle_input = f.read()
+  for line in puzzle_input.splitlines():
+    mapheadmatch = mapheadre.match(line)
+    maplinematch = maplinere.match(line)
+    seedsmatch = seedsre.match(line)
+    if seedsmatch is not None:
+      if seeds is not None:
+        print('already have seeds', seeds, 'encountered another seeds line',
+              seedsmatch.group('seed'))
+        return
+      seeds = tuple(map(int, seedsmatch.group('seeds').split()))
+    elif mapheadmatch is not None:
+      if current_source_destination is not None:
+        print('already have map', current_source_destination,
+              'encountered another map header', line.strip())
+        return
+      source_category = mapheadmatch.group('source_category')
+      destination_category = mapheadmatch.group('destination_category')
+      current_source_destination = (source_category, destination_category)
+      source2destination[source_category] = (destination_category, [])
+    elif maplinematch is not None:
+      destination_range_start = int(
+          maplinematch.group('destination_range_start'))
+      source_range_start = int(maplinematch.group('source_range_start'))
+      range_length = int(maplinematch.group('range_length'))
+      current_source, _ = current_source_destination
+      _, current_map = source2destination[current_source]
+      current_map.append(
+          (source_range_start, destination_range_start, range_length))
+    else:
+      current_source_destination = None
+  pprint.pprint(seeds)
+  # for source_category, (destination_category, mapping) in source2destination.items():
+  # source2destination[source_category] = (destination_category, tuple(sorted(mapping)))
+
+  pprint.pprint(source2destination)
+
+  seed2location = {}
+  for seed in seeds:
+    destination_category, mapping = source2destination['seed']
+    destination = day05lookup(seed, mapping)
+    while destination_category in source2destination:
+      destination_category, mapping = source2destination[destination_category]
+      destination = day05lookup(destination, mapping)
+    seed2location[seed] = destination
+
+  pprint.pprint(seed2location)
+  print(min(seed2location.values()))
+
+
+def main():
     day2function = {
         1: (day01, day01),
         2: (day02, day02),
         3: (day03, day03part02),
         4: (day04part01, day04part02),
+        5: (day05part01,),
     }
     parser = argparse.ArgumentParser()
     parser.add_argument('day', type=int)
@@ -413,3 +485,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     function = day2function[args.day][args.part - 1]
     function(args.filename, args.extra)
+
+if __name__ == '__main__':
+    main()
