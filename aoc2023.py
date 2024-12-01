@@ -1017,6 +1017,58 @@ def day09part02(puzzle_input, _):
   print(sum(completions))
 
 
+day10_shape2offsets = {
+    '|': ((-1, 0), (1, 0)),
+    '-': ((0, -1), (0, 1)),
+    'L': ((-1, 0), (0, 1)),
+    'J': ((-1, 0), (0, -1)),
+    '7': ((1, 0), (0, -1)),
+    'F': ((1, 0), (0, 1)),
+    '.': (),
+    'S': ((-1, 0), (1, 0), (0, -1), (0, 1)),
+}
+
+def day10_connected_neighbors(grid, position):
+    # position is (row, column)
+    row, column = position
+    shape = grid[row][column]
+    offsets = day10_shape2offsets[shape]
+    num_rows = len(grid)
+    num_columns = len(grid[0])
+    connected_neighbors = []
+    for (row_offset, column_offset) in offsets:
+        neighbor_row = row + row_offset
+        neighbor_column = column + column_offset
+        if neighbor_row < 0 or neighbor_column < 0:
+            continue
+        if row >= num_rows or column >= num_columns:
+            continue
+        neighbor_shape = grid[neighbor_row][neighbor_column]
+        neighbor_offsets = day10_shape2offsets[neighbor_shape]
+        for (neighbor_row_offset, neighbor_column_offset) in neighbor_offsets:
+            if ((neighbor_row + neighbor_row_offset), (neighbor_column + neighbor_column_offset)) == position:
+                connected_neighbors.append(((neighbor_row + neighbor_row_offset), (neighbor_column + neighbor_column_offset)))
+    return tuple(connected_neighbors)
+
+
+def day10_walk_grid(grid, start, position, steps):
+    connected_neighbors = day10_connected_neighbors(grid, position)
+    for connected_neighbor in connected_neighbors:
+        day10_walk_grid(grid, start, connected_neighbor, steps + 1)
+
+
+def day10part01(puzzle_input, _):
+    grid = puzzle_input.splitlines()
+    start_row = None
+    start_column = None
+    for row, row_string in enumerate(grid):
+        potential_start_column = row_string.find('S')
+        if potential_start_column > 0:
+            start_row = row
+            start_column = potential_start_column
+            break
+
+
 def main():
     day2function = {
         1: (day01, day01),
