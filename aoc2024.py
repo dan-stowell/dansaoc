@@ -113,4 +113,6 @@ if __name__ == '__main__':
         result = DayClass(puzzle_input).part01()
     elif args.part == 2:
         result = DayClass(puzzle_input).part02()
+    else:
+        result = None
     print(result)
