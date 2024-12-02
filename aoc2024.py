@@ -1,6 +1,5 @@
 import argparse
 import collections
-import pprint
 
 
 class Day01:
