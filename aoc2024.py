@@ -1,5 +1,6 @@
 import argparse
 import collections
+import pprint
 
 
 class Day01:
@@ -40,6 +41,60 @@ class Day01:
         return sum_of_similarity_scores
 
 
+class Day02:
+    def __init__(self, puzzle_input):
+        self.puzzle_input = puzzle_input
+
+
+    def part01(self):
+        reports = self.puzzle_input.splitlines()
+        safe_reports = []
+        for report in reports:
+            levels = [int(x) for x in report.split()]
+            last_level = levels[0]
+            differences = []
+            for level in levels[1:]:
+                differences.append(last_level - level)
+                last_level = level
+            all_decreasing = all(difference < 0 for difference in differences)
+            all_increasing = all(difference > 0 for difference in differences)
+            all_within_range = all(abs(difference) >= 1 and abs(difference) <= 3 for difference in differences)
+            if (all_decreasing or all_increasing) and all_within_range:
+                safe_reports.append(report)
+        return len(safe_reports)
+
+
+    def are_level_pairs_safe(self, level_pairs):
+        differences = [l - r for (l, r) in level_pairs]
+        all_decreasing = all(d < 0 for d in differences)
+        all_increasing = all(d > 0 for d in differences)
+        all_within_range = all(abs(d) >= 1 and abs(d) <= 3 for d in differences)
+        return (all_decreasing or all_increasing) and all_within_range
+
+
+    def part02(self):
+        reports = self.puzzle_input.splitlines()
+        safe_reports = []
+        for report in reports:
+            levels = [int(x) for x in report.split()]
+            adjacent_level_pairs = zip(levels[:-1], levels[1:])
+            adjacent_level_pairs_safe = self.are_level_pairs_safe(adjacent_level_pairs)
+            if adjacent_level_pairs_safe:
+                safe_reports.append(report)
+                continue
+
+            for index_to_remove in range(len(levels)):
+                levels_with_one_removed = list(levels)
+                levels_with_one_removed.pop(index_to_remove)
+                level_pairs_with_one_removed = zip(levels_with_one_removed[:-1], levels_with_one_removed[1:])
+                level_pairs_with_one_removed_safe = self.are_level_pairs_safe(level_pairs_with_one_removed)
+                if level_pairs_with_one_removed_safe:
+                    safe_reports.append(report)
+                    break
+
+        return len(safe_reports)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('day', type=int)
@@ -51,6 +106,7 @@ if __name__ == '__main__':
 
     day2class = {
         1: Day01,
+        2: Day02,
     }
     DayClass = day2class[args.day]
     if args.part == 1:
