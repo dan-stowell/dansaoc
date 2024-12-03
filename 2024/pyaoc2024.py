@@ -1,5 +1,6 @@
 import argparse
 import collections
+import re
 
 
 class Day01:
@@ -94,6 +95,39 @@ class Day02:
         return len(safe_reports)
 
 
+class Day03:
+    def __init__(self, puzzle_input):
+        self.puzzle_input = puzzle_input
+
+
+    def part01(self):
+        mul_re = re.compile('mul\((?P<left>\d+),(?P<right>\d+)\)')
+        sum_of_multiplications = 0
+        for match in mul_re.finditer(self.puzzle_input):
+            sum_of_multiplications += int(match.group('left')) * int(match.group('right'))
+        return sum_of_multiplications
+
+
+    def part02(self):
+        instruction_re = re.compile("(?P<dont_instruction>don't\(\))|(?P<do_instruction>do\(\))|(?P<multiplication>mul\((?P<left>\d+),(?P<right>\d+)\))")
+        sum_of_multiplications = 0
+        multiplication_enabled = True
+        for match in instruction_re.finditer(self.puzzle_input):
+            if match.group('dont_instruction') is not None:
+                multiplication_enabled = False
+                continue
+            elif match.group('do_instruction') is not None:
+                multiplication_enabled = True
+                continue
+            elif match.group('multiplication') is not None:
+                if multiplication_enabled:
+                    sum_of_multiplications += int(match.group('left')) * int(match.group('right'))
+                continue
+            else:
+                continue
+        return sum_of_multiplications
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('day', type=int)
@@ -106,6 +140,7 @@ if __name__ == '__main__':
     day2class = {
         1: Day01,
         2: Day02,
+        3: Day03,
     }
     DayClass = day2class[args.day]
     if args.part == 1:
