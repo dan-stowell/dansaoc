@@ -128,6 +128,73 @@ class Day03:
         return sum_of_multiplications
 
 
+class Day04:
+    def __init__(self, puzzle_input):
+        self.puzzle_input = puzzle_input
+        self.grid = self.puzzle_input.splitlines()
+
+    def has_letters_in_direction(self, letters_to_find, position, direction):
+        if len(letters_to_find) <= 0:
+            return True
+        row, column = position
+        if row < 0 or row >= len(self.grid) or column < 0 or column >= len(self.grid[0]):
+            return False
+        letter = self.grid[row][column]
+        if letter == letters_to_find[0]:
+            next_position = (row + direction[0], column + direction[1])
+            return self.has_letters_in_direction(letters_to_find[1:], next_position, direction)
+        else:
+            return False
+
+    def part01(self):
+        directions = {
+            (0, 1),
+            (0, -1),
+            (1, 0),
+            (-1, 0),
+            (1, 1),
+            (1, -1),
+            (-1, 1),
+            (-1, -1),
+        }
+        xmas_count = 0
+        for (row, row_string) in enumerate(self.grid):
+            for (column, letter) in enumerate(row_string):
+                if letter == 'X':
+                    for direction in directions:
+                        next_position = ((row + direction[0]), (column + direction[1]))
+                        if self.has_letters_in_direction('MAS', next_position, direction):
+                            xmas_count += 1
+                else:
+                    continue
+        return xmas_count
+
+
+    def part02(self):
+        xmas_count = 0
+        for (row, row_string) in enumerate(self.grid):
+            for (column, letter) in enumerate(row_string):
+                if letter == 'A':
+                    # MAS, MAS
+                    # MAS, SAM
+                    # SAM, MAS
+                    # SAM, SAM
+                    northwest_to_southeast_has_letters = (
+                        self.has_letters_in_direction('MAS', (row - 1, column - 1), (1, 1)) or
+                        self.has_letters_in_direction('SAM', (row - 1, column - 1), (1, 1))
+                    )
+                    northeast_to_southwest_has_letters = (
+                        self.has_letters_in_direction('MAS', (row - 1, column + 1), (1, -1)) or
+                        self.has_letters_in_direction('SAM', (row - 1, column + 1), (1, -1))
+                    )
+                    if northwest_to_southeast_has_letters and northeast_to_southwest_has_letters:
+                        xmas_count += 1
+                    else:
+                        continue
+                else:
+                    continue
+        return xmas_count
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('day', type=int)
@@ -141,6 +208,7 @@ if __name__ == '__main__':
         1: Day01,
         2: Day02,
         3: Day03,
+        4: Day04,
     }
     DayClass = day2class[args.day]
     if args.part == 1:
