@@ -215,46 +215,53 @@ class Day05:
                 continue
 
 
+    def is_page_update_in_order(self, page_update):
+        indices_pages = tuple(enumerate(page_update))
+        page2index = { page: index for index, page in indices_pages }
+        is_page_update_in_correct_order = True
+        for index, page in indices_pages:
+            if not is_page_update_in_correct_order:
+                break
+            if page in self.before2afters:
+                after_pages = self.before2afters[page]
+                for after_page in after_pages:
+                    if after_page in page2index:
+                        after_index = page2index[after_page]
+                        if after_index > index:
+                            is_page_update_in_correct_order = True
+                            continue
+                        else:
+                            is_page_update_in_correct_order = False
+                            break
+                    else:
+                        continue
+                if not is_page_update_in_correct_order:
+                    break
+            elif page in self.after2befores:
+                before_pages = self.after2befores[page]
+                for before_page in before_pages:
+                    if before_page in page2index:
+                        before_index = page2index[before_page]
+                        if before_index < index:
+                            is_page_update_in_correct_order = True
+                            continue
+                        else:
+                            is_page_update_in_correct_order = False
+                            break
+                    else:
+                        continue
+                if not is_page_update_in_correct_order:
+                    break
+            else:
+                continue
+        return is_page_update_in_correct_order
+
+
     def part01(self):
         updates_in_correct_order = []
         for page_update in self.page_updates:
-            indices_pages = tuple(enumerate(page_update))
-            page2index = { page: index for index, page in indices_pages }
-            is_update_in_correct_order = True
-            for index, page in indices_pages:
-                if page in self.before2afters:
-                    after_pages = self.before2afters[page]
-                    for after_page in after_pages:
-                        if after_page in page2index:
-                            after_index = page2index[after_page]
-                            if after_index > index:
-                                is_update_in_correct_order = True
-                                continue
-                            else:
-                                is_update_in_correct_order = False
-                                break
-                        else:
-                            continue
-                    if not is_update_in_correct_order:
-                        break
-                elif page in self.after2befores:
-                    before_pages = self.after2befores[page]
-                    for before_page in before_pages:
-                        if before_page in page2index:
-                            before_index = page2index[before_page]
-                            if before_index < index:
-                                is_update_in_correct_order = True
-                                continue
-                            else:
-                                is_update_in_correct_order = False
-                                break
-                        else:
-                            continue
-                    if not is_update_in_correct_order:
-                        break
-                else:
-                    continue
-            if is_update_in_correct_order:
+            is_page_update_in_correct_order = self.is_page_update_in_order(page_update)
+            if is_page_update_in_correct_order:
                 updates_in_correct_order.append(page_update)
 
         sum_middle_pages = 0
