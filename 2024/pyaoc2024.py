@@ -1,5 +1,6 @@
 import argparse
 import collections
+import math
 import re
 
 
@@ -195,6 +196,76 @@ class Day04:
                     continue
         return xmas_count
 
+
+class Day05:
+    def __init__(self, puzzle_input):
+        self.puzzle_input = puzzle_input
+        self.before2afters = collections.defaultdict(set)
+        self.after2befores = collections.defaultdict(set)
+        self.page_updates = []
+        for line in self.puzzle_input.splitlines():
+            if '|' in line:
+                before, after = tuple(int(x) for x in line.split('|'))
+                self.before2afters[before].add(after)
+                self.after2befores[after].add(before)
+            elif ',' in line:
+                pages_to_produce = tuple(int(x) for x in line.split(','))
+                self.page_updates.append(pages_to_produce)
+            else:
+                continue
+
+
+    def part01(self):
+        updates_in_correct_order = []
+        for page_update in self.page_updates:
+            indices_pages = tuple(enumerate(page_update))
+            page2index = { page: index for index, page in indices_pages }
+            is_update_in_correct_order = True
+            for index, page in indices_pages:
+                if page in self.before2afters:
+                    after_pages = self.before2afters[page]
+                    for after_page in after_pages:
+                        if after_page in page2index:
+                            after_index = page2index[after_page]
+                            if after_index > index:
+                                is_update_in_correct_order = True
+                                continue
+                            else:
+                                is_update_in_correct_order = False
+                                break
+                        else:
+                            continue
+                    if not is_update_in_correct_order:
+                        break
+                elif page in self.after2befores:
+                    before_pages = self.after2befores[page]
+                    for before_page in before_pages:
+                        if before_page in page2index:
+                            before_index = page2index[before_page]
+                            if before_index < index:
+                                is_update_in_correct_order = True
+                                continue
+                            else:
+                                is_update_in_correct_order = False
+                                break
+                        else:
+                            continue
+                    if not is_update_in_correct_order:
+                        break
+                else:
+                    continue
+            if is_update_in_correct_order:
+                updates_in_correct_order.append(page_update)
+
+        sum_middle_pages = 0
+        for update_in_correct_order in updates_in_correct_order:
+            middle_index = math.floor(len(update_in_correct_order) / 2)
+            middle_page = update_in_correct_order[middle_index]
+            sum_middle_pages += middle_page
+
+        return sum_middle_pages
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('day', type=int)
@@ -209,6 +280,7 @@ if __name__ == '__main__':
         2: Day02,
         3: Day03,
         4: Day04,
+        5: Day05,
     }
     DayClass = day2class[args.day]
     if args.part == 1:
