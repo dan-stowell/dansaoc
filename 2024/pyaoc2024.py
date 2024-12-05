@@ -1,5 +1,6 @@
 import argparse
 import collections
+import functools
 import math
 import re
 
@@ -201,13 +202,11 @@ class Day05:
     def __init__(self, puzzle_input):
         self.puzzle_input = puzzle_input
         self.before2afters = collections.defaultdict(set)
-        self.after2befores = collections.defaultdict(set)
         self.page_updates = []
         for line in self.puzzle_input.splitlines():
             if '|' in line:
                 before, after = tuple(int(x) for x in line.split('|'))
                 self.before2afters[before].add(after)
-                self.after2befores[after].add(before)
             elif ',' in line:
                 pages_to_produce = tuple(int(x) for x in line.split(','))
                 self.page_updates.append(pages_to_produce)
@@ -218,43 +217,21 @@ class Day05:
     def is_page_update_in_order(self, page_update):
         indices_pages = tuple(enumerate(page_update))
         page2index = { page: index for index, page in indices_pages }
-        is_page_update_in_correct_order = True
         for index, page in indices_pages:
-            if not is_page_update_in_correct_order:
-                break
             if page in self.before2afters:
                 after_pages = self.before2afters[page]
                 for after_page in after_pages:
                     if after_page in page2index:
                         after_index = page2index[after_page]
                         if after_index > index:
-                            is_page_update_in_correct_order = True
                             continue
                         else:
-                            is_page_update_in_correct_order = False
-                            break
+                            return False
                     else:
                         continue
-                if not is_page_update_in_correct_order:
-                    break
-            elif page in self.after2befores:
-                before_pages = self.after2befores[page]
-                for before_page in before_pages:
-                    if before_page in page2index:
-                        before_index = page2index[before_page]
-                        if before_index < index:
-                            is_page_update_in_correct_order = True
-                            continue
-                        else:
-                            is_page_update_in_correct_order = False
-                            break
-                    else:
-                        continue
-                if not is_page_update_in_correct_order:
-                    break
             else:
                 continue
-        return is_page_update_in_correct_order
+        return True
 
 
     def part01(self):
@@ -268,6 +245,31 @@ class Day05:
         for update_in_correct_order in updates_in_correct_order:
             middle_index = math.floor(len(update_in_correct_order) / 2)
             middle_page = update_in_correct_order[middle_index]
+            sum_middle_pages += middle_page
+
+        return sum_middle_pages
+
+    def less_than(self, a_page, another_page):
+        result =  another_page in self.before2afters.get(a_page, ()) or a_page < another_page
+        print('a_page', a_page, 'another_page', another_page, 'result', result)
+        return result
+
+    def part02(self):
+        updates_in_incorrect_order = []
+        for page_update in self.page_updates:
+            is_page_update_in_correct_order = self.is_page_update_in_order(page_update)
+            if not is_page_update_in_correct_order:
+                updates_in_incorrect_order.append(page_update)
+        corrected_page_updates = []
+        for incorrect_update in updates_in_incorrect_order:
+            corrected_page_update = sorted(incorrect_update, key=functools.cmp_to_key(self.less_than))
+            corrected_page_updates.append(corrected_page_update)
+            print('incorrect', incorrect_update, 'corrected', corrected_page_update)
+
+        sum_middle_pages = 0
+        for corrected_page_update in corrected_page_updates:
+            middle_index = math.floor(len(corrected_page_update) / 2)
+            middle_page = corrected_page_update[middle_index]
             sum_middle_pages += middle_page
 
         return sum_middle_pages
