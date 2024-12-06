@@ -1,8 +1,7 @@
 import argparse
 import collections
-import functools
+import copy
 import math
-import pprint
 import re
 
 
@@ -306,6 +305,10 @@ class Day06Grid:
                 return row, column
         return None, None
 
+    def insert_obstacle(self, row, column):
+        row_string = self.row_strings[row]
+        modified_row_string = row_string[:column] + 'O' + row_string[column + 1:]
+        self.row_strings[row] = modified_row_string
 
     def walk(self, row, column, direction):
         turn_right = {
@@ -315,72 +318,52 @@ class Day06Grid:
             (0, -1): (-1, 0),
         }
         while True:
-            # visited.add((row, column))
             yield ((row, column), direction)
             row_in_front, column_in_front = row + direction[0], column + direction[1]
             if row_in_front < 0 or row_in_front >= self.num_rows or column_in_front < 0 or column_in_front >= self.num_columns:
                 break
-            is_obstacle_in_front = self.row_strings[row_in_front][column_in_front] == '#'
+            is_obstacle_in_front = self.row_strings[row_in_front][column_in_front] in ('#', 'O')
             if is_obstacle_in_front:
                 direction = turn_right[direction]
-                yield ((row, column), direction)
                 continue
             else:
                 row, column = row_in_front, column_in_front
                 continue
+
 
 class Day06:
     def __init__(self, puzzle_input):
         self.puzzle_input = puzzle_input
         self.start_grid = Day06Grid(self.puzzle_input)
 
-        # self.grid = self.puzzle_input.splitlines()
-        # self.num_rows = len(self.grid)
-        # self.num_columns = len(self.grid[0])
-
-    # def find_start_row_start_column(self):
-    #     start_row, start_column = None, None
-    #     for row, row_string in enumerate(self.grid):
-    #         column = row_string.find('^')
-    #         if column < 0:
-    #             continue
-    #         else:
-    #             start_row, start_column = row, column
-    #     assert(start_row is not None and start_column is not None)
-    #     return start_row, start_column
-
-    # def walk(self, row, column, direction):
-    #     turn_right = {
-    #         (-1, 0): (0, 1),
-    #         (0, 1): (1, 0),
-    #         (1, 0): (0, -1),
-    #         (0, -1): (-1, 0),
-    #     }
-    #     while True:
-    #         # visited.add((row, column))
-    #         yield ((row, column), direction)
-    #         row_in_front, column_in_front = row + direction[0], column + direction[1]
-    #         if row_in_front < 0 or row_in_front >= self.num_rows or column_in_front < 0 or column_in_front >= self.num_columns:
-    #             break
-    #         is_obstacle_in_front = self.grid[row_in_front][column_in_front] == '#'
-    #         if is_obstacle_in_front:
-    #             direction = turn_right[direction]
-    #             yield ((row, column), direction)
-    #             continue
-    #         else:
-    #             row, column = row_in_front, column_in_front
-    #             continue
-
-
     def part01(self):
         start_row, start_column = self.start_grid.find('^')
-        visited_positions = frozenset(position for position, _ in self.start_grid.walk(start_row, start_column, (-1, 0)))
+        visited_positions = set()
+        for position, direction in self.start_grid.walk(start_row, start_column, (-1, 0)):
+            visited_positions.add(position)
         return len(visited_positions)
-        # start_row, start_column = self.find_start_row_start_column()
-        # visited_positions = frozenset(position for position, _ in self.walk(start_row, start_column, (-1, 0)))
-        # return len(visited_positions)
 
+    def part02(self):
+        start_row, start_column = self.start_grid.find('^')
+        obstacle_positions_that_cause_cycles = set()
+        for obstacle_row in range(self.start_grid.num_rows):
+            for obstacle_column in range(self.start_grid.num_columns):
+                already_has_obstacle = self.start_grid.row_strings[obstacle_row][obstacle_column] == '#'
+                is_start = obstacle_row == start_row and obstacle_column == start_column
+                if already_has_obstacle or is_start:
+                    continue
+                else:
+                    grid_copy = copy.deepcopy(self.start_grid)
+                    grid_copy.insert_obstacle(obstacle_row, obstacle_column)
+                    visited_positions_directions = set()
+                    for position, direction in grid_copy.walk(start_row, start_column, (-1, 0)):
+                        found_cycle = (position, direction) in visited_positions_directions
+                        if found_cycle:
+                            obstacle_positions_that_cause_cycles.add((obstacle_row, obstacle_column))
+                            break
+                        visited_positions_directions.add((position, direction))
 
+        return len(obstacle_positions_that_cause_cycles)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
