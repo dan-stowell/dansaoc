@@ -291,6 +291,50 @@ class Day05:
         return sum_middle_pages
 
 
+class Day06:
+    def __init__(self, puzzle_input):
+        self.puzzle_input = puzzle_input
+        self.grid = self.puzzle_input.splitlines()
+
+    def part01(self):
+        start_row, start_column = None, None
+        for row, row_string in enumerate(self.grid):
+            column = row_string.find('^')
+            if column < 0:
+                continue
+            else:
+                start_row, start_column = row, column
+        assert(start_row is not None and start_column is not None)
+
+        turn_right = {
+            (-1, 0): (0, 1),
+            (0, 1): (1, 0),
+            (1, 0): (0, -1),
+            (0, -1): (-1, 0),
+        }
+        num_rows = len(self.grid)
+        num_columns = len(self.grid[0])
+
+        direction = (-1, 0)
+        row, column = start_row, start_column
+        visited = set()
+
+        while True: # row >= 0 and row < num_rows and column >= 0 and column < num_columns:
+            visited.add((row, column))
+            row_in_front, column_in_front = row + direction[0], column + direction[1]
+            if row_in_front < 0 or row_in_front >= num_rows or column_in_front < 0 or column_in_front >= num_columns:
+                break
+            is_obstacle_in_front = self.grid[row_in_front][column_in_front] == '#'
+            if is_obstacle_in_front:
+                direction = turn_right[direction]
+                continue
+            else:
+                row, column = row_in_front, column_in_front
+                continue
+
+        return len(visited)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('day', type=int)
@@ -306,6 +350,7 @@ if __name__ == '__main__':
         3: Day03,
         4: Day04,
         5: Day05,
+        6: Day06,
     }
     DayClass = day2class[args.day]
     if args.part == 1:
