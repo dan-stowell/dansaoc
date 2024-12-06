@@ -291,48 +291,95 @@ class Day05:
         return sum_middle_pages
 
 
-class Day06:
-    def __init__(self, puzzle_input):
-        self.puzzle_input = puzzle_input
-        self.grid = self.puzzle_input.splitlines()
+class Day06Grid:
+    def __init__(self, grid_string):
+        self.row_strings = grid_string.splitlines()
+        self.num_rows = len(self.row_strings)
+        self.num_columns = len(self.row_strings[0])
 
-    def part01(self):
-        start_row, start_column = None, None
-        for row, row_string in enumerate(self.grid):
-            column = row_string.find('^')
+    def find(self, character):
+        for row, row_string in enumerate(self.row_strings):
+            column = row_string.find(character)
             if column < 0:
                 continue
             else:
-                start_row, start_column = row, column
-        assert(start_row is not None and start_column is not None)
+                return row, column
+        return None, None
 
+
+    def walk(self, row, column, direction):
         turn_right = {
             (-1, 0): (0, 1),
             (0, 1): (1, 0),
             (1, 0): (0, -1),
             (0, -1): (-1, 0),
         }
-        num_rows = len(self.grid)
-        num_columns = len(self.grid[0])
-
-        direction = (-1, 0)
-        row, column = start_row, start_column
-        visited = set()
-
-        while True: # row >= 0 and row < num_rows and column >= 0 and column < num_columns:
-            visited.add((row, column))
+        while True:
+            # visited.add((row, column))
+            yield ((row, column), direction)
             row_in_front, column_in_front = row + direction[0], column + direction[1]
-            if row_in_front < 0 or row_in_front >= num_rows or column_in_front < 0 or column_in_front >= num_columns:
+            if row_in_front < 0 or row_in_front >= self.num_rows or column_in_front < 0 or column_in_front >= self.num_columns:
                 break
-            is_obstacle_in_front = self.grid[row_in_front][column_in_front] == '#'
+            is_obstacle_in_front = self.row_strings[row_in_front][column_in_front] == '#'
             if is_obstacle_in_front:
                 direction = turn_right[direction]
+                yield ((row, column), direction)
                 continue
             else:
                 row, column = row_in_front, column_in_front
                 continue
 
-        return len(visited)
+class Day06:
+    def __init__(self, puzzle_input):
+        self.puzzle_input = puzzle_input
+        self.start_grid = Day06Grid(self.puzzle_input)
+
+        # self.grid = self.puzzle_input.splitlines()
+        # self.num_rows = len(self.grid)
+        # self.num_columns = len(self.grid[0])
+
+    # def find_start_row_start_column(self):
+    #     start_row, start_column = None, None
+    #     for row, row_string in enumerate(self.grid):
+    #         column = row_string.find('^')
+    #         if column < 0:
+    #             continue
+    #         else:
+    #             start_row, start_column = row, column
+    #     assert(start_row is not None and start_column is not None)
+    #     return start_row, start_column
+
+    # def walk(self, row, column, direction):
+    #     turn_right = {
+    #         (-1, 0): (0, 1),
+    #         (0, 1): (1, 0),
+    #         (1, 0): (0, -1),
+    #         (0, -1): (-1, 0),
+    #     }
+    #     while True:
+    #         # visited.add((row, column))
+    #         yield ((row, column), direction)
+    #         row_in_front, column_in_front = row + direction[0], column + direction[1]
+    #         if row_in_front < 0 or row_in_front >= self.num_rows or column_in_front < 0 or column_in_front >= self.num_columns:
+    #             break
+    #         is_obstacle_in_front = self.grid[row_in_front][column_in_front] == '#'
+    #         if is_obstacle_in_front:
+    #             direction = turn_right[direction]
+    #             yield ((row, column), direction)
+    #             continue
+    #         else:
+    #             row, column = row_in_front, column_in_front
+    #             continue
+
+
+    def part01(self):
+        start_row, start_column = self.start_grid.find('^')
+        visited_positions = frozenset(position for position, _ in self.start_grid.walk(start_row, start_column, (-1, 0)))
+        return len(visited_positions)
+        # start_row, start_column = self.find_start_row_start_column()
+        # visited_positions = frozenset(position for position, _ in self.walk(start_row, start_column, (-1, 0)))
+        # return len(visited_positions)
+
 
 
 if __name__ == '__main__':
