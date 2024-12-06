@@ -2,6 +2,7 @@ import argparse
 import collections
 import functools
 import math
+import pprint
 import re
 
 
@@ -213,7 +214,6 @@ class Day05:
             else:
                 continue
 
-
     def is_page_update_in_order(self, page_update):
         indices_pages = tuple(enumerate(page_update))
         page2index = { page: index for index, page in indices_pages }
@@ -233,6 +233,28 @@ class Day05:
                 continue
         return True
 
+    def swap_incorrectly_ordered_pages(self, page_update):
+        indices_pages = tuple(enumerate(page_update))
+        page2index = { page: index for index, page in indices_pages }
+        update_with_swapped_pages = list(page_update)
+        for index, page in indices_pages:
+            if page in self.before2afters:
+                after_pages = self.before2afters[page]
+                for after_page in after_pages:
+                    if after_page in page2index:
+                        after_index = page2index[after_page]
+                        if after_index > index:
+                            continue
+                        else:
+                            update_with_swapped_pages[index] = after_page
+                            update_with_swapped_pages[after_index] = page
+                            return update_with_swapped_pages
+                    else:
+                        continue
+            else:
+                continue
+        return update_with_swapped_pages
+
 
     def part01(self):
         updates_in_correct_order = []
@@ -249,22 +271,16 @@ class Day05:
 
         return sum_middle_pages
 
-    def less_than(self, a_page, another_page):
-        result =  another_page in self.before2afters.get(a_page, ()) or a_page < another_page
-        print('a_page', a_page, 'another_page', another_page, 'result', result)
-        return result
-
     def part02(self):
-        updates_in_incorrect_order = []
-        for page_update in self.page_updates:
-            is_page_update_in_correct_order = self.is_page_update_in_order(page_update)
-            if not is_page_update_in_correct_order:
-                updates_in_incorrect_order.append(page_update)
         corrected_page_updates = []
-        for incorrect_update in updates_in_incorrect_order:
-            corrected_page_update = sorted(incorrect_update, key=functools.cmp_to_key(self.less_than))
-            corrected_page_updates.append(corrected_page_update)
-            print('incorrect', incorrect_update, 'corrected', corrected_page_update)
+        for page_update in self.page_updates:
+            if not self.is_page_update_in_order(page_update):
+                page_update_in_correct_order = False
+                update_with_swapped_pages = page_update
+                while not page_update_in_correct_order:
+                    update_with_swapped_pages = self.swap_incorrectly_ordered_pages(update_with_swapped_pages)
+                    page_update_in_correct_order = self.is_page_update_in_order(update_with_swapped_pages)
+                corrected_page_updates.append(update_with_swapped_pages)
 
         sum_middle_pages = 0
         for corrected_page_update in corrected_page_updates:
