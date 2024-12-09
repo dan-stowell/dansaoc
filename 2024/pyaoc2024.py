@@ -104,7 +104,7 @@ class Day03:
 
 
     def part01(self):
-        mul_re = re.compile('mul\((?P<left>\d+),(?P<right>\d+)\)')
+        mul_re = re.compile(r'mul\((?P<left>\d+),(?P<right>\d+)\)')
         sum_of_multiplications = 0
         for match in mul_re.finditer(self.puzzle_input):
             sum_of_multiplications += int(match.group('left')) * int(match.group('right'))
@@ -112,7 +112,7 @@ class Day03:
 
 
     def part02(self):
-        instruction_re = re.compile("(?P<dont_instruction>don't\(\))|(?P<do_instruction>do\(\))|(?P<multiplication>mul\((?P<left>\d+),(?P<right>\d+)\))")
+        instruction_re = re.compile(r"(?P<dont_instruction>don't\(\))|(?P<do_instruction>do\(\))|(?P<multiplication>mul\((?P<left>\d+),(?P<right>\d+)\))")
         sum_of_multiplications = 0
         multiplication_enabled = True
         for match in instruction_re.finditer(self.puzzle_input):
