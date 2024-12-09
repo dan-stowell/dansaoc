@@ -2,6 +2,7 @@ import argparse
 import collections
 import copy
 import math
+import operator
 import re
 
 
@@ -365,6 +366,158 @@ class Day06:
 
         return len(obstacle_positions_that_cause_cycles)
 
+
+def day07_concat_whole_numbers(left, right):
+    return int(str(left) + str(right))
+
+def day07_results_matching_test_value(operators, test_value, result_so_far, numbers):
+    # print('test_value', test_value, 'result_so_far', result_so_far, 'numbers', numbers)
+    if len(numbers) == 0:
+        if result_so_far == test_value:
+            return (result_so_far,)
+        else:
+            return ()
+    number = numbers[0]
+    rest = numbers[1:]
+    for op in operators:
+        result_after_next_op = op(result_so_far, number)
+        results_matching_test_value = day07_results_matching_test_value(operators, test_value, result_after_next_op, rest)
+        # print('result_after_next_op', result_after_next_op, 'results_matching_test_value', results_matching_test_value)
+        if len(results_matching_test_value) > 0:
+            return results_matching_test_value
+    return ()
+
+
+class Day07:
+    def __init__(self, puzzle_input):
+        self.puzzle_input = puzzle_input
+        self.test_values_number_lists = []
+        for line in self.puzzle_input.splitlines():
+            test_value_string, number_strings = line.split(':')
+            test_value = int(test_value_string)
+            numbers = [int(x) for x in number_strings.split()]
+            self.test_values_number_lists.append((test_value, numbers))
+
+    def part01(self):
+        total_calibration_result = 0
+        operators = (operator.add, operator.mul)
+        for test_value, numbers in self.test_values_number_lists:
+            first_number = numbers[0]
+            rest = numbers[1:]
+            results_matching_test_value = day07_results_matching_test_value(operators, test_value, first_number, rest)
+            if len(results_matching_test_value) > 0:
+                total_calibration_result += test_value
+        return total_calibration_result
+
+    def part02(self):
+        total_calibration_result = 0
+        operators = (operator.add, operator.mul, day07_concat_whole_numbers)
+        for test_value, numbers in self.test_values_number_lists:
+            first_number = numbers[0]
+            rest = numbers[1:]
+            results_matching_test_value = day07_results_matching_test_value(operators, test_value, first_number, rest)
+            if len(results_matching_test_value) > 0:
+                total_calibration_result += test_value
+        return total_calibration_result
+
+
+class Day08:
+    def __init__(self, puzzle_input):
+        self.puzzle_input = puzzle_input
+        self.row_strings = self.puzzle_input.splitlines()
+        self.num_rows = len(self.row_strings)
+        self.num_columns = len(self.row_strings[0])
+
+    def is_on_map(self, location):
+        row, column = location
+        return row >= 0 and row < self.num_rows and column >= 0 and column <= self.num_columns
+
+    def part01(self):
+        frequency2locations = collections.defaultdict(list)
+        for row, row_string in enumerate(self.row_strings):
+            for column, frequency in enumerate(row_string):
+                if frequency == '.':
+                    continue
+                frequency2locations[frequency].append((row, column))
+        potential_antinodes = set()
+        for frequency, locations in frequency2locations.items():
+            for i, location in enumerate(locations):
+                row, column = location
+                other_locations = locations[:i] + locations[i + 1:]
+                for other_location in other_locations:
+                    other_row, other_column = other_location
+                    abs_row_difference, abs_column_difference = abs(row - other_row), abs(column - other_column)
+
+                    if (row < other_row and column > other_column):
+                        # location NE, other_location SW
+                        northeastern_antinode = (row - abs_row_difference, column + abs_column_difference)
+                        potential_antinodes.add(northeastern_antinode)
+                        southwestern_antinode = (other_row + abs_row_difference, other_column - abs_column_difference)
+                        potential_antinodes.add(southwestern_antinode)
+                        continue
+
+                    elif (row > other_row and column < other_column):
+                        # location SW, other_location NE
+                        southwestern_antinode = (row + abs_row_difference, column - abs_column_difference)
+                        potential_antinodes.add(southwestern_antinode)
+                        northeastern_antinode = (other_row - abs_row_difference, other_column + abs_column_difference)
+                        potential_antinodes.add(northeastern_antinode)
+                        continue
+
+                    elif (row < other_row and column < other_column):
+                        # location NW, other_location SE
+                        northwestern_antinode = (row - abs_row_difference, column - abs_column_difference)
+                        potential_antinodes.add(northwestern_antinode)
+                        southeastern_antinode = (other_row + abs_row_difference, other_column + abs_column_difference)
+                        potential_antinodes.add(southeastern_antinode)
+                        continue
+
+                    elif (row > other_row and column > other_column):
+                        # location SE, other_location NW
+                        southeastern_antinode = (row + abs_row_difference, column + abs_column_difference)
+                        potential_antinodes.add(southeastern_antinode)
+                        northwestern_antinode = (other_row - abs_row_difference, other_column - abs_column_difference)
+                        potential_antinodes.add(northwestern_antinode)
+                        continue
+
+                    elif (row < other_row and column == other_column):
+                        # location N, other_location S
+                        northern_antinode = (row - abs_row_difference, column)
+                        potential_antinodes.add(northern_antinode)
+                        southern_antinode = (other_row + abs_row_difference, other_column)
+                        potential_antinodes.add(southern_antinode)
+                        continue
+
+                    elif (row > other_row and column == other_column):
+                        # location S, other_location N
+                        southern_antinode = (row + abs_row_difference, column)
+                        potential_antinodes.add(southern_antinode)
+                        northern_antinode = (other_row - abs_row_difference, other_column)
+                        potential_antinodes.add(northern_antinode)
+                        continue
+
+                    elif (row == other_row and column < other_column):
+                        # location W, other_location E
+                        western_antinode = (row, column - abs_column_difference)
+                        potential_antinodes.add(western_antinode)
+                        eastern_antinode = (other_row, other_column + abs_column_difference)
+                        potential_antinodes.add(eastern_antinode)
+                        continue
+
+                    elif (row == other_row and column > other_column):
+                        # location E, other_location W
+                        eastern_antinode = (row, column + abs_column_difference)
+                        potential_antinodes.add(eastern_antinode)
+                        western_antinode = (other_row, other_column - abs_column_difference)
+                        potential_antinodes.add(western_antinode)
+                        continue
+
+                    else:
+                        assert(False)
+        antinodes_on_map = set(potential_antinode for potential_antinode in potential_antinodes if self.is_on_map(potential_antinode))
+        return len(antinodes_on_map)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('day', type=int)
@@ -381,6 +534,8 @@ if __name__ == '__main__':
         4: Day04,
         5: Day05,
         6: Day06,
+        7: Day07,
+        8: Day08,
     }
     DayClass = day2class[args.day]
     if args.part == 1:
