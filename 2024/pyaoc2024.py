@@ -539,9 +539,9 @@ if __name__ == '__main__':
     }
     DayClass = day2class[args.day]
     if args.part == 1:
-        result = DayClass(puzzle_input).part01()
+        result = DayClass(puzzle_input).part01() # type: ignore[attr-defined]
     elif args.part == 2:
-        result = DayClass(puzzle_input).part02()
+        result = DayClass(puzzle_input).part02() # type: ignore[attr-defined]
     else:
         result = None
     print(result)
