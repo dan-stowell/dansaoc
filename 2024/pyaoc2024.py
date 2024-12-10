@@ -437,7 +437,7 @@ class Day08:
 
     def is_on_map(self, location):
         row, column = location
-        return row >= 0 and row < self.num_rows and column >= 0 and column <= self.num_columns
+        return row >= 0 and row < self.num_rows and column >= 0 and column < self.num_columns
 
     def potential_antinodes(self):
         for frequency, locations in self.frequency2locations.items():
