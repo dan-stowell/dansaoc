@@ -541,6 +541,113 @@ class Day08:
         return len(antinodes_on_map)
 
 
+class Day09:
+
+    def __init__(self, puzzle_input):
+        self.disk_map = puzzle_input.strip()
+        blocks = []
+        file_and_free_space_entries = []
+        is_file = True
+        file_id = 0
+        for num_blocks_string in self.disk_map:
+            num_blocks = int(num_blocks_string)
+            if is_file:
+                file_id_string = str(file_id)
+                blocks.extend([file_id_string] * num_blocks)
+                file_and_free_space_entries.append((is_file, file_id_string, num_blocks))
+                is_file = False
+                file_id += 1
+                continue
+            else:
+                blocks.extend(['.'] * num_blocks)
+                file_and_free_space_entries.append((is_file, '.', num_blocks))
+                is_file = True
+                continue
+        self.blocks = blocks
+        self.file_and_free_space_entries = file_and_free_space_entries
+
+    def part01(self):
+        blocks = list(self.blocks)
+        num_blocks = len(blocks)
+        left_index = 0
+        right_index = num_blocks - 1
+        while left_index < right_index:
+            left_block = blocks[left_index]
+            if left_block.isdigit():
+                left_index += 1
+                continue
+
+            right_block = blocks[right_index]
+            if not right_block.isdigit():
+                right_index -= 1
+                continue
+
+            blocks[left_index] = right_block
+            blocks[right_index] = left_block
+            left_index += 1
+            right_index -= 1
+            continue
+        checksum = 0
+        for i, block in enumerate(blocks):
+            if not block.isdigit():
+                break
+            checksum += (i * int(block))
+        return checksum
+
+    def part02(self):
+        file_and_free_space_entries = list(self.file_and_free_space_entries)
+        num_entries = len(file_and_free_space_entries)
+        right_index = num_entries - 1
+        while right_index >= 0:
+            right_entry = file_and_free_space_entries[right_index]
+            right_entry_is_file, right_entry_file_id, right_entry_num_blocks = right_entry
+            if not right_entry_is_file:
+                right_index -= 1
+                continue
+
+            # find left space entry big enough for right entry
+            left_index = None
+            for i in range(right_index):
+                left_entry = file_and_free_space_entries[i]
+                left_entry_is_file, left_entry_file_id, left_entry_num_blocks = left_entry
+                if left_entry_is_file:
+                    continue
+                elif left_entry_num_blocks < right_entry_num_blocks:
+                    continue
+                else:
+                    left_index = i
+                    break
+
+            if left_index is None:
+                right_index -= 1
+                continue
+            left_entry = file_and_free_space_entries[left_index]
+            left_entry_is_file, left_entry_file_id, left_entry_num_blocks = left_entry
+
+            if left_entry_num_blocks > right_entry_num_blocks:
+                remaining_space_entry = (False, '.', left_entry_num_blocks - right_entry_num_blocks)
+                space_entry_to_swap = (False, '.', right_entry_num_blocks)
+                file_and_free_space_entries[left_index] = right_entry
+                file_and_free_space_entries[right_index] = space_entry_to_swap
+                file_and_free_space_entries.insert(left_index + 1, remaining_space_entry)
+                continue
+            elif left_entry_num_blocks == right_entry_num_blocks:
+                file_and_free_space_entries[left_index] = right_entry
+                file_and_free_space_entries[right_index] = left_entry
+                right_index -= 1
+                continue
+            else:
+                right_index -= 1
+                continue
+
+        blocks = ''.join(file_id * num_blocks for _, file_id, num_blocks in file_and_free_space_entries)
+        checksum = 0
+        for i, block in enumerate(blocks):
+            if not block.isdigit():
+                continue
+            checksum += (i * int(block))
+        return checksum
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('day', type=int)
@@ -559,6 +666,7 @@ if __name__ == '__main__':
         6: Day06,
         7: Day07,
         8: Day08,
+        9: Day09, # 84572976092 too low
     }
     DayClass = day2class[args.day]
     if args.part == 1:
