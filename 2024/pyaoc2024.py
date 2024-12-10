@@ -706,6 +706,48 @@ class Day10:
             score += len(walkable_9s)
         return score
 
+    def find_trails(self, row, column, height, earlier_locations):
+        all_trails = set()
+        if height == 9:
+            trail = tuple(earlier_locations + ((row, column),))
+            all_trails.add(trail)
+            return all_trails
+
+        directions = (
+            (-1, 0), # north
+            (0, 1),  # east
+            (1, 0),  # south
+            (0, -1), # west
+        )
+        for d in directions:
+            adjacent_row, adjacent_column = row + d[0], column + d[1]
+            if adjacent_row < 0 or adjacent_row >= self.num_rows:
+                continue
+            if adjacent_column < 0 or adjacent_column >= self.num_columns:
+                continue
+            adjacent_tile = self.row_strings[adjacent_row][adjacent_column]
+            if not adjacent_tile.isdigit():
+                continue
+            adjacent_height = int(adjacent_tile)
+            if adjacent_height - height == 1:
+                trails = self.find_trails(adjacent_row, adjacent_column, adjacent_height, tuple(earlier_locations + (row, column)))
+                all_trails.update(trails)
+            else:
+                continue
+        return all_trails
+
+    def part02(self):
+        trailhead2trails = {}
+        for trailhead in self.find_trailheads():
+            trailhead_row, trailhead_column = trailhead
+            trails = self.find_trails(trailhead_row, trailhead_column, 0, ())
+            trailhead2trails[trailhead] = trails
+
+        # pprint.pprint(trailhead2walkable_9s)
+        score = 0
+        for trails in trailhead2trails.values():
+            score += len(trails)
+        return score
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
