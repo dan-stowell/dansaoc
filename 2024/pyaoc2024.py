@@ -439,7 +439,7 @@ class Day08:
         row, column = location
         return row >= 0 and row < self.num_rows and column >= 0 and column < self.num_columns
 
-    def potential_antinodes(self):
+    def antinodes_on_map(self):
         for frequency, locations in self.frequency2locations.items():
             for i, location in enumerate(locations):
                 row, column = location
@@ -451,65 +451,81 @@ class Day08:
                     if (row < other_row and column > other_column):
                         # location NE, other_location SW
                         northeastern_antinode = (row - abs_row_difference, column + abs_column_difference)
-                        yield (frequency, location, other_location, northeastern_antinode)
+                        if self.is_on_map(northeastern_antinode):
+                            yield (frequency, location, other_location, northeastern_antinode)
                         southwestern_antinode = (other_row + abs_row_difference, other_column - abs_column_difference)
-                        yield (frequency, location, other_location, southwestern_antinode)
+                        if self.is_on_map(southwestern_antinode):
+                            yield (frequency, location, other_location, southwestern_antinode)
                         continue
 
                     elif (row > other_row and column < other_column):
                         # location SW, other_location NE
                         southwestern_antinode = (row + abs_row_difference, column - abs_column_difference)
-                        yield (frequency, location, other_location, southwestern_antinode)
+                        if self.is_on_map(southwestern_antinode):
+                            yield (frequency, location, other_location, southwestern_antinode)
                         northeastern_antinode = (other_row - abs_row_difference, other_column + abs_column_difference)
-                        yield (frequency, location, other_location, northeastern_antinode)
+                        if self.is_on_map(northeastern_antinode):
+                            yield (frequency, location, other_location, northeastern_antinode)
                         continue
 
                     elif (row < other_row and column < other_column):
                         # location NW, other_location SE
                         northwestern_antinode = (row - abs_row_difference, column - abs_column_difference)
-                        yield (frequency, location, other_location, northwestern_antinode)
+                        if self.is_on_map(northwestern_antinode):
+                            yield (frequency, location, other_location, northwestern_antinode)
                         southeastern_antinode = (other_row + abs_row_difference, other_column + abs_column_difference)
-                        yield (frequency, location, other_location, southeastern_antinode)
+                        if self.is_on_map(southeastern_antinode):
+                            yield (frequency, location, other_location, southeastern_antinode)
                         continue
 
                     elif (row > other_row and column > other_column):
                         # location SE, other_location NW
                         southeastern_antinode = (row + abs_row_difference, column + abs_column_difference)
-                        yield (frequency, location, other_location, southeastern_antinode)
+                        if self.is_on_map(southeastern_antinode):
+                            yield (frequency, location, other_location, southeastern_antinode)
                         northwestern_antinode = (other_row - abs_row_difference, other_column - abs_column_difference)
-                        yield (frequency, location, other_location, northwestern_antinode)
+                        if self.is_on_map(northwestern_antinode):
+                            yield (frequency, location, other_location, northwestern_antinode)
                         continue
 
                     elif (row < other_row and column == other_column):
                         # location N, other_location S
                         northern_antinode = (row - abs_row_difference, column)
-                        yield (frequency, location, other_location, northern_antinode)
+                        if self.is_on_map(northern_antinode):
+                            yield (frequency, location, other_location, northern_antinode)
                         southern_antinode = (other_row + abs_row_difference, other_column)
-                        yield (frequency, location, other_location, southern_antinode)
+                        if self.is_on_map(southern_antinode):
+                            yield (frequency, location, other_location, southern_antinode)
                         continue
 
                     elif (row > other_row and column == other_column):
                         # location S, other_location N
                         southern_antinode = (row + abs_row_difference, column)
-                        yield (frequency, location, other_location, southern_antinode)
+                        if self.is_on_map(southern_antinode):
+                            yield (frequency, location, other_location, southern_antinode)
                         northern_antinode = (other_row - abs_row_difference, other_column)
-                        yield (frequency, location, other_location, northern_antinode)
+                        if self.is_on_map(northern_antinode):
+                            yield (frequency, location, other_location, northern_antinode)
                         continue
 
                     elif (row == other_row and column < other_column):
                         # location W, other_location E
                         western_antinode = (row, column - abs_column_difference)
-                        yield (frequency, location, other_location, western_antinode)
+                        if self.is_on_map(western_antinode):
+                            yield (frequency, location, other_location, western_antinode)
                         eastern_antinode = (other_row, other_column + abs_column_difference)
-                        yield (frequency, location, other_location, eastern_antinode)
+                        if self.is_on_map(eastern_antinode):
+                            yield (frequency, location, other_location, eastern_antinode)
                         continue
 
                     elif (row == other_row and column > other_column):
                         # location E, other_location W
                         eastern_antinode = (row, column + abs_column_difference)
-                        yield (frequency, location, other_location, eastern_antinode)
+                        if self.is_on_map(eastern_antinode):
+                            yield (frequency, location, other_location, eastern_antinode)
                         western_antinode = (other_row, other_column - abs_column_difference)
-                        yield (frequency, location, other_location, western_antinode)
+                        if self.is_on_map(western_antinode):
+                            yield (frequency, location, other_location, western_antinode)
                         continue
 
                     else:
@@ -533,12 +549,7 @@ class Day08:
 
 
     def part01(self):
-        antinodes_on_map = set()
-        for frequency, location, other_location, potential_antinode in self.potential_antinodes():
-            # print(frequency, location, other_location, potential_antinode)
-            if self.is_on_map(potential_antinode):
-                antinodes_on_map.add(potential_antinode)
-        # assert(self.check_antinodes_against_solution(antinodes_on_map))
+        antinodes_on_map = frozenset(antinode_on_map for _, _, _, antinode_on_map in self.antinodes_on_map())
         return len(antinodes_on_map)
 
 
