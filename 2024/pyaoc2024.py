@@ -3,6 +3,7 @@ import collections
 import copy
 import math
 import operator
+import pprint
 import re
 
 
@@ -648,6 +649,64 @@ class Day09:
             checksum += (i * int(block))
         return checksum
 
+class Day10:
+    def __init__(self, puzzle_input):
+        self.puzzle_input = puzzle_input
+        self.row_strings = self.puzzle_input.splitlines()
+        self.num_rows = len(self.row_strings)
+        self.num_columns = len(self.row_strings[0])
+
+    def find_trailheads(self):
+        for row, row_string in enumerate(self.row_strings):
+            for column, tile in enumerate(row_string):
+                if tile == '0':
+                    yield row, column
+                else:
+                    continue
+
+    def find_walkable_9s(self, row, column, height):
+        all_walkable_9s = set()
+        if height == 9:
+            all_walkable_9s.add((row, column))
+            return all_walkable_9s
+
+        directions = (
+            (-1, 0), # north
+            (0, 1),  # east
+            (1, 0),  # south
+            (0, -1), # west
+        )
+        for d in directions:
+            adjacent_row, adjacent_column = row + d[0], column + d[1]
+            if adjacent_row < 0 or adjacent_row >= self.num_rows:
+                continue
+            if adjacent_column < 0 or adjacent_column >= self.num_columns:
+                continue
+            adjacent_tile = self.row_strings[adjacent_row][adjacent_column]
+            if not adjacent_tile.isdigit():
+                continue
+            adjacent_height = int(adjacent_tile)
+            if adjacent_height - height == 1:
+                walkable_9s = self.find_walkable_9s(adjacent_row, adjacent_column, adjacent_height)
+                all_walkable_9s.update(walkable_9s)
+            else:
+                continue
+        return all_walkable_9s
+
+    def part01(self):
+        trailhead2walkable_9s = {}
+        for trailhead in self.find_trailheads():
+            trailhead_row, trailhead_column = trailhead
+            walkable_9s = self.find_walkable_9s(trailhead_row, trailhead_column, 0)
+            trailhead2walkable_9s[trailhead] = walkable_9s
+
+        pprint.pprint(trailhead2walkable_9s)
+        score = 0
+        for walkable_9s in trailhead2walkable_9s.values():
+            score += len(walkable_9s)
+        return score
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('day', type=int)
@@ -667,6 +726,7 @@ if __name__ == '__main__':
         7: Day07,
         8: Day08,
         9: Day09, # 84572976092 too low
+        10: Day10,
     }
     DayClass = day2class[args.day]
     if args.part == 1:
