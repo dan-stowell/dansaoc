@@ -531,6 +531,72 @@ class Day08:
                     else:
                         assert(False)
 
+    def antinodes_on_map_any_position(self):
+        for frequency, locations in self.frequency2locations.items():
+            for i, location in enumerate(locations):
+                row, column = location
+                other_locations = locations[:i] + locations[i + 1:]
+                for other_location in other_locations:
+                    other_row, other_column = other_location
+                    abs_row_difference, abs_column_difference = abs(row - other_row), abs(column - other_column)
+
+                    if (row < other_row and column > other_column):
+                        # direction NE, other_direction SW
+                        direction = (-abs_row_difference, abs_column_difference)
+                        other_direction = (abs_row_difference, -abs_column_difference)
+
+                    elif (row > other_row and column < other_column):
+                        # direction SW, other_direction NE
+                        direction = (abs_row_difference, -abs_column_difference)
+                        other_direction = (-abs_row_difference, abs_column_difference)
+
+                    elif (row < other_row and column < other_column):
+                        # direction NW, other_direction SE
+                        direction = (-abs_row_difference, -abs_column_difference)
+                        other_direction = (abs_row_difference, abs_column_difference)
+
+                    elif (row > other_row and column > other_column):
+                        # direction SE, other_direction NW
+                        direction = (abs_row_difference, abs_column_difference)
+                        other_direction = (-abs_row_difference, -abs_column_difference)
+
+                    elif (row < other_row and column == other_column):
+                        # direction N, other_direction S
+                        direction = (-abs_row_difference, 0)
+                        other_direction = (abs_row_difference, 0)
+
+                    elif (row > other_row and column == other_column):
+                        # direction S, other_direction N
+                        direction = (abs_row_difference, 0)
+                        other_direction = (-abs_row_difference, 0)
+
+                    elif (row == other_row and column < other_column):
+                        # direction W, other_direction E
+                        direction = (0, -abs_column_difference)
+                        other_direction = (0, abs_column_difference)
+
+                    elif (row == other_row and column > other_column):
+                        # direction E, other_direction W
+                        direction = (0, abs_column_difference)
+                        other_direction = (0, -abs_column_difference)
+
+                    else:
+                        assert(False) # unreachable
+
+                    potential_antinode_row = row + direction[0]
+                    potential_antinode_column = column + direction[1]
+                    while self.is_on_map((potential_antinode_row, potential_antinode_column)):
+                        yield (frequency, location, other_location, (potential_antinode_row, potential_antinode_column))
+                        potential_antinode_row += direction[0]
+                        potential_antinode_column += direction[1]
+
+                    other_potential_antinode_row = other_row + other_direction[0]
+                    other_potential_antinode_column = other_column + other_direction[1]
+                    while self.is_on_map((other_potential_antinode_row, other_potential_antinode_column)):
+                        yield (frequency, location, other_location, (other_potential_antinode_row, other_potential_antinode_column))
+                        other_potential_antinode_row += other_direction[0]
+                        other_potential_antinode_column += other_direction[1]
+
     def check_antinodes_against_solution(self, antinodes_on_map):
         solution_antinodes = set()
         for row, row_string in enumerate(self.row_strings):
@@ -550,6 +616,10 @@ class Day08:
 
     def part01(self):
         antinodes_on_map = frozenset(antinode_on_map for _, _, _, antinode_on_map in self.antinodes_on_map())
+        return len(antinodes_on_map)
+
+    def part02(self):
+        antinodes_on_map = frozenset(antinode_on_map for _, _,_, antinode_on_map in self.antinodes_on_map_any_position())
         return len(antinodes_on_map)
 
 
@@ -760,6 +830,34 @@ class Day10:
             score += len(trails)
         return score
 
+
+class Day11:
+    def __init__(self, puzzle_input):
+        self.puzzle_input = puzzle_input
+        self.stones = tuple(int(x) for x in self.puzzle_input.split())
+        self.num_blinks = 25
+
+    def part01(self):
+        stones = self.stones
+        for _ in range(self.num_blinks):
+            next_stones = []
+            for stone in stones:
+                if stone == 0:
+                    next_stones.append(1)
+                    continue
+                elif len(str(stone)) % 2 == 0:
+                    half = len(str(stone)) // 2
+                    left = int(str(stone)[0:half])
+                    right = int(str(stone)[half:])
+                    next_stones.append(left)
+                    next_stones.append(right)
+                    continue
+                else:
+                    next_stones.append(stone * 2024)
+            stones = tuple(next_stones)
+        return len(stones)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('day', type=int)
@@ -780,6 +878,7 @@ if __name__ == '__main__':
         8: Day08,
         9: Day09, # 84572976092 too low
         10: Day10,
+        11: Day11,
     }
     DayClass = day2class[args.day]
     if args.part == 1:
