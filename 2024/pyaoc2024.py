@@ -635,14 +635,16 @@ class Day09:
             num_blocks = int(num_blocks_string)
             if is_file:
                 file_id_string = str(file_id)
-                blocks.extend([file_id_string] * num_blocks)
-                file_and_free_space_entries.append((is_file, file_id_string, num_blocks))
+                if num_blocks > 0:
+                    blocks.extend([file_id_string] * num_blocks)
+                    file_and_free_space_entries.append((is_file, file_id_string, num_blocks))
                 is_file = False
                 file_id += 1
                 continue
             else:
-                blocks.extend(['.'] * num_blocks)
-                file_and_free_space_entries.append((is_file, '.', num_blocks))
+                if num_blocks > 0:
+                    blocks.extend(['.'] * num_blocks)
+                    file_and_free_space_entries.append((is_file, '.', num_blocks))
                 is_file = True
                 continue
         self.blocks = blocks
@@ -669,6 +671,7 @@ class Day09:
             left_index += 1
             right_index -= 1
             continue
+
         checksum = 0
         for i, block in enumerate(blocks):
             if not block.isdigit():
@@ -683,6 +686,7 @@ class Day09:
         while right_index >= 0:
             right_entry = file_and_free_space_entries[right_index]
             right_entry_is_file, right_entry_file_id, right_entry_num_blocks = right_entry
+            assert(right_entry_num_blocks > 0)
             if not right_entry_is_file:
                 right_index -= 1
                 continue
@@ -692,6 +696,7 @@ class Day09:
             for i in range(right_index):
                 left_entry = file_and_free_space_entries[i]
                 left_entry_is_file, left_entry_file_id, left_entry_num_blocks = left_entry
+                assert(left_entry_num_blocks > 0)
                 if left_entry_is_file:
                     continue
                 elif left_entry_num_blocks < right_entry_num_blocks:
@@ -705,9 +710,14 @@ class Day09:
                 continue
             left_entry = file_and_free_space_entries[left_index]
             left_entry_is_file, left_entry_file_id, left_entry_num_blocks = left_entry
+            assert(left_entry_num_blocks > 0)
 
             if left_entry_num_blocks > right_entry_num_blocks:
-                remaining_space_entry = (False, '.', left_entry_num_blocks - right_entry_num_blocks)
+                assert(right_entry_num_blocks > 0)
+                remaining_num_blocks = left_entry_num_blocks - right_entry_num_blocks
+                assert(remaining_num_blocks > 0)
+
+                remaining_space_entry = (False, '.', remaining_num_blocks)
                 space_entry_to_swap = (False, '.', right_entry_num_blocks)
                 file_and_free_space_entries[left_index] = right_entry
                 file_and_free_space_entries[right_index] = space_entry_to_swap
@@ -722,12 +732,17 @@ class Day09:
                 right_index -= 1
                 continue
 
-        blocks = ''.join(file_id * num_blocks for _, file_id, num_blocks in file_and_free_space_entries)
+        # pprint.pprint(file_and_free_space_entries)
+        # blocks = ''.join(file_id * num_blocks for _, file_id, num_blocks in file_and_free_space_entries)
         checksum = 0
-        for i, block in enumerate(blocks):
-            if not block.isdigit():
+        block_position = 0
+        for is_file, file_id, num_blocks in file_and_free_space_entries:
+            if not is_file:
+                block_position += num_blocks
                 continue
-            checksum += (i * int(block))
+            for i in range(block_position, block_position + num_blocks):
+                checksum += (i * int(file_id))
+            block_position += num_blocks
         return checksum
 
 class Day10:
@@ -830,32 +845,60 @@ class Day10:
             score += len(trails)
         return score
 
+# thanks to Claude for these two helper functions
+
+def day11_has_even_digit_count(stone):
+    # Add 1 since log10(100) = 2 but 100 has 3 digits
+    digit_count = math.floor(math.log10(stone)) + 1
+    return digit_count % 2 == 0
+
+
+def day11_split_stone(stone):
+    n = math.floor(math.log10(stone)) + 1  # digit count
+    divisor = 10 ** (n//2)
+    left = stone // divisor
+    right = stone % divisor
+    return left, right
+
+
+def day11_num_stones_after_n_blinks(stone, blinks_remaining):
+    if blinks_remaining <= 0:
+        return 1
+
+    if stone == 0:
+        next_stones = (1,)
+    elif day11_has_even_digit_count(stone):
+        left, right = day11_split_stone(stone)
+        next_stones = (left, right)
+    else:
+        next_stones = (stone * 2024,)
+
+    num_stones = 0
+    for next_stone in next_stones:
+        num_stones += day11_num_stones_after_n_blinks(next_stone, blinks_remaining - 1)
+    return num_stones
+
 
 class Day11:
     def __init__(self, puzzle_input):
         self.puzzle_input = puzzle_input
         self.stones = tuple(int(x) for x in self.puzzle_input.split())
-        self.num_blinks = 25
+
 
     def part01(self):
-        stones = self.stones
-        for _ in range(self.num_blinks):
-            next_stones = []
-            for stone in stones:
-                if stone == 0:
-                    next_stones.append(1)
-                    continue
-                elif len(str(stone)) % 2 == 0:
-                    half = len(str(stone)) // 2
-                    left = int(str(stone)[0:half])
-                    right = int(str(stone)[half:])
-                    next_stones.append(left)
-                    next_stones.append(right)
-                    continue
-                else:
-                    next_stones.append(stone * 2024)
-            stones = tuple(next_stones)
-        return len(stones)
+        num_blinks = 25
+        num_stones = 0
+        for stone in self.stones:
+            num_stones += day11_num_stones_after_n_blinks(stone, num_blinks)
+        return num_stones
+
+
+    def part02(self):
+        num_blinks = 75
+        num_stones = 0
+        for stone in self.stones:
+            num_stones += day11_num_stones_after_n_blinks(stone, num_blinks)
+        return num_stones
 
 
 if __name__ == '__main__':
