@@ -862,6 +862,7 @@ def day11_split_stone(stone):
 
 
 def day11_num_stones_after_n_blinks(stone, blinks_remaining):
+    print(stone, blinks_remaining)
     if blinks_remaining <= 0:
         return 1
 
@@ -883,6 +884,7 @@ class Day11:
     def __init__(self, puzzle_input):
         self.puzzle_input = puzzle_input
         self.stones = tuple(int(x) for x in self.puzzle_input.split())
+        self.stone_and_blinks_remaining2num_stones = {}
 
 
     def part01(self):
@@ -893,11 +895,32 @@ class Day11:
         return num_stones
 
 
+    def num_stones_after_n_blinks_with_cache(self, stone, blinks_remaining):
+        if blinks_remaining <= 0:
+            return 1
+
+        if (stone, blinks_remaining) in self.stone_and_blinks_remaining2num_stones:
+            return self.stone_and_blinks_remaining2num_stones[(stone, blinks_remaining)]
+
+        if stone == 0:
+            next_stones = (1,)
+        elif day11_has_even_digit_count(stone):
+            left, right = day11_split_stone(stone)
+            next_stones = (left, right)
+        else:
+            next_stones = (stone * 2024,)
+
+        num_stones = 0
+        for next_stone in next_stones:
+            num_stones += self.num_stones_after_n_blinks_with_cache(next_stone, blinks_remaining - 1)
+        self.stone_and_blinks_remaining2num_stones[(stone, blinks_remaining)] = num_stones
+        return num_stones
+
     def part02(self):
         num_blinks = 75
         num_stones = 0
         for stone in self.stones:
-            num_stones += day11_num_stones_after_n_blinks(stone, num_blinks)
+            num_stones += self.num_stones_after_n_blinks_with_cache(stone, num_blinks)
         return num_stones
 
 
