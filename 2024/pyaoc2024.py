@@ -992,6 +992,107 @@ class Day11:
         return num_stones
 
 
+class Day12:
+    def __init__(self, puzzle_input):
+        self.puzzle_input = puzzle_input
+        self.row_strings = self.puzzle_input.splitlines()
+        self.num_rows = len(self.row_strings)
+        self.num_columns = len(self.row_strings[0])
+        self.directions = (
+            (-1, 0), # N
+            (0, 1),  # E
+            (1, 0),  # S
+            (0, -1), # W
+        )
+
+    def is_on_map(self, row, column):
+        return row >= 0 and row < self.num_rows and column >= 0 and column < self.num_columns
+
+    def walk_region(self, location):
+        print('walk_region', location)
+        row, column = location
+        plot_label = self.row_strings[row][column]
+        locations_in_region = set((location,))
+        visited = set((location,))
+        to_visit_list = []
+        to_visit_set = set()
+
+        for direction in self.directions:
+            row_to_visit, column_to_visit = row + direction[0], column + direction[1]
+            if self.is_on_map(row_to_visit, column_to_visit):
+                if (row_to_visit, column_to_visit) in to_visit_set or (row_to_visit, column_to_visit) in visited:
+                    continue
+                else:
+                    to_visit_list.append((row_to_visit, column_to_visit))
+                    to_visit_set.add((row_to_visit, column_to_visit))
+                    continue
+            else:
+                continue
+
+        while len(to_visit_list) > 0:
+            visiting_location = to_visit_list.pop(0)
+            to_visit_set.remove(visiting_location)
+            visited.add(visiting_location)
+            assert(len(to_visit_set) == len(to_visit_list))
+            print(plot_label, location, 'visiting', visiting_location, len(to_visit_list), len(visited))
+
+            visiting_row, visiting_column = visiting_location
+            visiting_plot_label = self.row_strings[visiting_row][visiting_column]
+            if plot_label == visiting_plot_label:
+                locations_in_region.add((visiting_row, visiting_column))
+                for direction in self.directions:
+                    row_to_consider, column_to_consider = (visiting_row + direction[0], visiting_column + direction[1])
+                    if self.is_on_map(row_to_consider, column_to_consider):
+                        if (row_to_consider, column_to_consider) in visited or (row_to_consider, column_to_consider) in to_visit_set:
+                            continue
+                        else:
+                            to_visit_list.append((row_to_consider, column_to_consider))
+                            to_visit_set.add((row_to_consider, column_to_consider))
+                            continue
+                    else:
+                        continue
+
+        return plot_label, locations_in_region
+
+    def perimeter(self, plot_label, locations_in_region):
+        sides_facing_outside = 0
+        for location in locations_in_region:
+            row, column = location
+            for direction in self.directions:
+                adjacent_row, adjacent_column = row + direction[0], column + direction[1]
+                if adjacent_row < 0 or adjacent_row >= self.num_rows or adjacent_column < 0 or adjacent_column >= self.num_columns:
+                    sides_facing_outside += 1
+                    continue
+                else:
+                    adjacent_plot_label = self.row_strings[adjacent_row][adjacent_column]
+                    if adjacent_plot_label == plot_label:
+                        continue
+                    else:
+                        sides_facing_outside += 1
+                        continue
+        return sides_facing_outside
+
+    def part01(self):
+        region2label = {}
+        locations_in_a_region = set()
+        for row, row_string in enumerate(self.row_strings):
+            for column, plot_label in enumerate(row_string):
+                location = row, column
+                if location in locations_in_a_region:
+                    continue
+                plot_label, locations_in_region = self.walk_region(location)
+                sorted_locations_in_region = tuple(sorted(locations_in_region))
+                region2label[sorted_locations_in_region] = plot_label
+                locations_in_a_region.update(locations_in_region)
+
+        total_price = 0
+        for sorted_locations_in_region, plot_label in region2label.items():
+            area = len(sorted_locations_in_region)
+            perimeter = self.perimeter(plot_label, sorted_locations_in_region)
+            print(plot_label, area, perimeter, sorted_locations_in_region)
+            total_price += (area * perimeter)
+        return total_price
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('day', type=int)
@@ -1013,6 +1114,7 @@ if __name__ == '__main__':
         9: Day09, # 84572976092 too low
         10: Day10,
         11: Day11,
+        12: Day12,
     }
     DayClass = day2class[args.day]
     if args.part == 1:
