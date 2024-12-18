@@ -1055,11 +1055,25 @@ class Day12:
 
     def perimeter(self, plot_label, locations_in_region):
         sides_facing_outside = 0
+        east_west_sides = []
+        north_south_sides = []
         for location in locations_in_region:
             row, column = location
             for direction in Direction:
                 adjacent_row, adjacent_column = row + direction.value[0], column + direction.value[1]
                 if adjacent_row < 0 or adjacent_row >= self.num_rows or adjacent_column < 0 or adjacent_column >= self.num_columns:
+                    if direction is Direction.EAST:
+                        column_after = adjacent_column
+                        east_west_sides.append((direction, row, column_after))
+                    elif direction is Direction.WEST:
+                        column_after = column
+                        east_west_sides.append((direction, row, column_after))
+                    elif direction is Direction.NORTH:
+                        row_after = row
+                        north_south_sides.append((direction, row_after, column))
+                    elif direction is Direction.SOUTH:
+                        row_after = adjacent_row
+                        north_south_sides.append((direction, row_after, column))
                     sides_facing_outside += 1
                     continue
                 else:
@@ -1067,9 +1081,22 @@ class Day12:
                     if adjacent_plot_label == plot_label:
                         continue
                     else:
+                        if direction is Direction.EAST:
+                            column_after = adjacent_column
+                            east_west_sides.append((direction, row, column_after))
+                        elif direction is Direction.WEST:
+                            column_after = column
+                            east_west_sides.append((direction, row, column_after))
+                        elif direction is Direction.NORTH:
+                            row_after = row
+                            north_south_sides.append((direction, row_after, column))
+                        elif direction is Direction.SOUTH:
+                            row_after = adjacent_row
+                            north_south_sides.append((direction, row_after, column))
                         sides_facing_outside += 1
                         continue
-        return sides_facing_outside
+
+        return sides_facing_outside, east_west_sides, north_south_sides
 
     def part01(self):
         region2label = {}
@@ -1087,8 +1114,47 @@ class Day12:
         total_price = 0
         for sorted_locations_in_region, plot_label in region2label.items():
             area = len(sorted_locations_in_region)
-            perimeter = self.perimeter(plot_label, sorted_locations_in_region)
+            perimeter, _, _ = self.perimeter(plot_label, sorted_locations_in_region)
             total_price += (area * perimeter)
+        return total_price
+
+    def part02(self):
+        region2label = {}
+        locations_in_a_region = set()
+        for row, row_string in enumerate(self.row_strings):
+            for column, plot_label in enumerate(row_string):
+                location = row, column
+                if location in locations_in_a_region:
+                    continue
+                plot_label, locations_in_region = self.walk_region(location)
+                sorted_locations_in_region = tuple(sorted(locations_in_region))
+                region2label[sorted_locations_in_region] = plot_label
+                locations_in_a_region.update(locations_in_region)
+
+        total_price = 0
+        for sorted_locations_in_region, plot_label in region2label.items():
+            area = len(sorted_locations_in_region)
+            _, east_west_sides, north_south_sides = self.perimeter(plot_label, sorted_locations_in_region)
+            num_sides = 0
+
+            east_west_direction_column_after_to_rows = collections.defaultdict(list)
+            for direction, row, column_after in east_west_sides:
+                east_west_direction_column_after_to_rows[(direction, column_after)].append(row)
+            for (_, column_after), rows in east_west_direction_column_after_to_rows.items():
+                sorted_rows = tuple(sorted(rows))
+                gaps = tuple(n for n in tuple(r - l for l, r in zip(sorted_rows[:-1], sorted_rows[1:])) if n > 1)
+                num_sides += len(gaps) + 1
+
+            north_south_direction_row_after_to_columns = collections.defaultdict(list)
+            for direction, row_after, column in north_south_sides:
+                north_south_direction_row_after_to_columns[(direction, row_after)].append(column)
+            for (_, row_after), columns in north_south_direction_row_after_to_columns.items():
+                sorted_columns = tuple(sorted(columns))
+                gaps = tuple(n for n in tuple(r - l for l, r in zip(sorted_columns[:-1], sorted_columns[1:])) if n > 1)
+                num_sides += len(gaps) + 1
+
+            print(plot_label, area, num_sides)
+            total_price += (area * num_sides)
         return total_price
 
 if __name__ == '__main__':
