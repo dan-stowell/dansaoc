@@ -1009,7 +1009,6 @@ class Day12:
         return row >= 0 and row < self.num_rows and column >= 0 and column < self.num_columns
 
     def walk_region(self, location):
-        print('walk_region', location)
         row, column = location
         plot_label = self.row_strings[row][column]
         locations_in_region = set((location,))
@@ -1034,7 +1033,6 @@ class Day12:
             to_visit_set.remove(visiting_location)
             visited.add(visiting_location)
             assert(len(to_visit_set) == len(to_visit_list))
-            print(plot_label, location, 'visiting', visiting_location, len(to_visit_list), len(visited))
 
             visiting_row, visiting_column = visiting_location
             visiting_plot_label = self.row_strings[visiting_row][visiting_column]
