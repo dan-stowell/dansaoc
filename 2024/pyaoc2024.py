@@ -1,6 +1,7 @@
 import argparse
 import collections
 import copy
+import enum
 import math
 import operator
 import pprint
@@ -992,18 +993,18 @@ class Day11:
         return num_stones
 
 
+class Direction(enum.Enum):
+    NORTH = (-1, 0)
+    SOUTH = (1, 0)
+    EAST = (0, 1)
+    WEST = (0, -1)
+
 class Day12:
     def __init__(self, puzzle_input):
         self.puzzle_input = puzzle_input
         self.row_strings = self.puzzle_input.splitlines()
         self.num_rows = len(self.row_strings)
         self.num_columns = len(self.row_strings[0])
-        self.directions = (
-            (-1, 0), # N
-            (0, 1),  # E
-            (1, 0),  # S
-            (0, -1), # W
-        )
 
     def is_on_map(self, row, column):
         return row >= 0 and row < self.num_rows and column >= 0 and column < self.num_columns
@@ -1016,8 +1017,8 @@ class Day12:
         to_visit_list = []
         to_visit_set = set()
 
-        for direction in self.directions:
-            row_to_visit, column_to_visit = row + direction[0], column + direction[1]
+        for direction in Direction:
+            row_to_visit, column_to_visit = row + direction.value[0], column + direction.value[1]
             if self.is_on_map(row_to_visit, column_to_visit):
                 if (row_to_visit, column_to_visit) in to_visit_set or (row_to_visit, column_to_visit) in visited:
                     continue
@@ -1038,8 +1039,8 @@ class Day12:
             visiting_plot_label = self.row_strings[visiting_row][visiting_column]
             if plot_label == visiting_plot_label:
                 locations_in_region.add((visiting_row, visiting_column))
-                for direction in self.directions:
-                    row_to_consider, column_to_consider = (visiting_row + direction[0], visiting_column + direction[1])
+                for direction in Direction:
+                    row_to_consider, column_to_consider = (visiting_row + direction.value[0], visiting_column + direction.value[1])
                     if self.is_on_map(row_to_consider, column_to_consider):
                         if (row_to_consider, column_to_consider) in visited or (row_to_consider, column_to_consider) in to_visit_set:
                             continue
@@ -1056,8 +1057,8 @@ class Day12:
         sides_facing_outside = 0
         for location in locations_in_region:
             row, column = location
-            for direction in self.directions:
-                adjacent_row, adjacent_column = row + direction[0], column + direction[1]
+            for direction in Direction:
+                adjacent_row, adjacent_column = row + direction.value[0], column + direction.value[1]
                 if adjacent_row < 0 or adjacent_row >= self.num_rows or adjacent_column < 0 or adjacent_column >= self.num_columns:
                     sides_facing_outside += 1
                     continue
@@ -1087,7 +1088,6 @@ class Day12:
         for sorted_locations_in_region, plot_label in region2label.items():
             area = len(sorted_locations_in_region)
             perimeter = self.perimeter(plot_label, sorted_locations_in_region)
-            print(plot_label, area, perimeter, sorted_locations_in_region)
             total_price += (area * perimeter)
         return total_price
 
